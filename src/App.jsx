@@ -516,7 +516,7 @@ function EventCard({ event, onClick }) {
           ))}
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div style={{ fontSize: 12, color: "#555" }}>👥 {event.confirmed} confirmados</div>
+          <div 
           <div style={{
             background: event.color, color: "#000",
             fontSize: 12, fontWeight: 800, padding: "6px 16px", borderRadius: 20
