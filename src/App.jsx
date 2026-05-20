@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { supabase } from "./supabase";
 
 const PLACES = [
   {
@@ -768,6 +769,51 @@ export default function App() {
   const [filterType, setFilterType] = useState("All");
   const [filterEventType, setFilterEventType] = useState("Todos");
   const [search, setSearch] = useState("");
+  const [events, setEvents] = useState(EVENTS);
+  const [loadingEvents, setLoadingEvents] = useState(true);
+
+  // Busca eventos do Supabase
+  useEffect(() => {
+    const fetchEvents = async () => {
+      setLoadingEvents(true);
+      const { data, error } = await supabase
+        .from("events")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Erro ao buscar eventos:", error);
+        // Se der erro, mantém os eventos de exemplo
+        setEvents(EVENTS);
+      } else if (data && data.length > 0) {
+        // Formata os dados do Supabase para o formato do app
+        const formatted = data.map(e => ({
+          id: e.id,
+          name: e.name,
+          type: e.type,
+          date: e.date,
+          time: e.time,
+          location: e.location,
+          address: e.address,
+          description: e.description,
+          lineup: e.lineup || [],
+          confirmed: e.confirmed || 0,
+          color: e.color || "#A78BFA",
+          gradient: e.gradient || `linear-gradient(135deg, ${e.color || "#A78BFA"}, #60A5FA)`,
+          emoji: e.emoji || "🎉",
+          tickets: e.tickets || [],
+          ticketLink: e.ticket_link || "#",
+        }));
+        setEvents(formatted);
+      } else {
+        // Se não tiver eventos no banco, usa os de exemplo
+        setEvents(EVENTS);
+      }
+      setLoadingEvents(false);
+    };
+
+    fetchEvents();
+  }, []);
 
   const filtered = PLACES.filter(p => {
     if (filterVibe !== "All" && p.vibe !== filterVibe) return false;
@@ -782,7 +828,7 @@ export default function App() {
     return true;
   });
 
-  const filteredEvents = EVENTS.filter(e =>
+  const filteredEvents = events.filter(e =>
     filterEventType === "Todos" || e.type === filterEventType
   );
 
@@ -969,15 +1015,21 @@ export default function App() {
             </div>
             {/* Cards */}
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              {filteredEvents.map(event => (
-                <EventCard key={event.id} event={event} onClick={setSelectedEvent} />
-              ))}
-              {filteredEvents.length === 0 && (
+              {loadingEvents ? (
+                <div style={{ textAlign: "center", padding: "60px 20px", color: "#555" }}>
+                  <div style={{ fontSize: 40, marginBottom: 12 }}>⏳</div>
+                  <div style={{ fontSize: 16, fontWeight: 600 }}>Carregando eventos...</div>
+                </div>
+              ) : filteredEvents.length === 0 ? (
                 <div style={{ textAlign: "center", padding: "60px 20px", color: "#555" }}>
                   <div style={{ fontSize: 40, marginBottom: 12 }}>🎉</div>
                   <div style={{ fontSize: 16, fontWeight: 600 }}>Nenhum evento nessa categoria</div>
                   <div style={{ fontSize: 13, marginTop: 6 }}>Tenta outro filtro!</div>
                 </div>
+              ) : (
+                filteredEvents.map(event => (
+                  <EventCard key={event.id} event={event} onClick={setSelectedEvent} />
+                ))
               )}
             </div>
           </div>
