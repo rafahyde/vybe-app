@@ -82,6 +82,90 @@ const PLACES = [
 
 const VIBES = ["All", "Quiet", "Chill", "Relaxed", "Lively", "Packed"];
 const TYPES = ["All", "bar", "club", "restaurant"];
+const EVENT_TYPES = ["Todos", "Universitária", "Show", "Eletrônico", "Funk", "Rock"];
+
+const EVENTS = [
+  {
+    id: 1,
+    name: "BATUKADA UNIVERSITÁRIA",
+    type: "Universitária",
+    date: "Sáb, 24 Mai",
+    time: "23:00",
+    location: "UNIVAP — Av. Shishima Hifumi, 2911",
+    description: "A maior festa universitária de SJC está de volta! DJs convidados, open bar por 2h e muito agito. Não perde!",
+    lineup: ["DJ Marquinhos", "DJ Letícia Lima", "MC Paulinho"],
+    confirmed: 312,
+    color: "#F472B6",
+    gradient: "linear-gradient(135deg, #F472B6, #A78BFA)",
+    tickets: [
+      { lote: "1° Lote", price: "R$25", available: true },
+      { lote: "2° Lote", price: "R$35", available: true },
+      { lote: "Na porta", price: "R$50", available: true },
+    ],
+    ticketLink: "https://sympla.com.br",
+    emoji: "🎓",
+  },
+  {
+    id: 2,
+    name: "HONEY CLUB PRESENTS: OVERLOAD",
+    type: "Eletrônico",
+    date: "Sex, 23 Mai",
+    time: "00:00",
+    location: "Honey Club — Av. Dr. Ademar de Barros, 152",
+    description: "Uma noite de house music com os melhores DJs do circuito paulista. Pista quente, luz estroboscópica e muito bass.",
+    lineup: ["DJ Snake Jr.", "Valentina Cruz", "KVSH"],
+    confirmed: 489,
+    color: "#A78BFA",
+    gradient: "linear-gradient(135deg, #A78BFA, #60A5FA)",
+    tickets: [
+      { lote: "1° Lote", price: "R$40", available: false },
+      { lote: "2° Lote", price: "R$55", available: true },
+      { lote: "VIP", price: "R$120", available: true },
+    ],
+    ticketLink: "https://sympla.com.br",
+    emoji: "🎧",
+  },
+  {
+    id: 3,
+    name: "BAILE DO VALE",
+    type: "Funk",
+    date: "Dom, 25 Mai",
+    time: "22:00",
+    location: "Arena Vale — R. dos Expedicionários, 500",
+    description: "O baile que tomou conta do Vale! Funk, pagode e muito suingue. Entrada feminina com desconto até meia noite.",
+    lineup: ["MC Davi", "MC Livinho", "DJ Batutinha"],
+    confirmed: 728,
+    color: "#34D399",
+    gradient: "linear-gradient(135deg, #34D399, #F59E0B)",
+    tickets: [
+      { lote: "Feminino", price: "R$15", available: true },
+      { lote: "Masculino", price: "R$30", available: true },
+      { lote: "Casal", price: "R$40", available: true },
+    ],
+    ticketLink: "https://sympla.com.br",
+    emoji: "🎤",
+  },
+  {
+    id: 4,
+    name: "FREAKOUT FEST",
+    type: "Rock",
+    date: "Sáb, 31 Mai",
+    time: "21:00",
+    location: "FREAKOUT — R. Luiz Jacinto, 240",
+    description: "Festival de rock alternativo com 3 bandas ao vivo, praça de alimentação e muito headbanging. A noite mais pesada do ano!",
+    lineup: ["Scalene", "Lagum", "Los Hermanos Cover"],
+    confirmed: 215,
+    color: "#F43F5E",
+    gradient: "linear-gradient(135deg, #F43F5E, #F59E0B)",
+    tickets: [
+      { lote: "1° Lote", price: "R$35", available: true },
+      { lote: "2° Lote", price: "R$45", available: true },
+      { lote: "Na porta", price: "R$60", available: true },
+    ],
+    ticketLink: "https://sympla.com.br",
+    emoji: "🎸",
+  },
+];
 
 const crowdColor = (c) => c >= 90 ? "#EF4444" : c >= 65 ? "#F59E0B" : "#22C55E";
 const crowdLabel = (c) => c >= 90 ? "Lotado" : c >= 65 ? "Movimentado" : "Tranquilo";
@@ -385,6 +469,157 @@ function PreferencesModal({ onClose, onApply }) {
   );
 }
 
+function EventCard({ event, onClick }) {
+  return (
+    <div onClick={() => onClick(event)} style={{
+      background: "#111", border: "1px solid #222", borderRadius: 20,
+      overflow: "hidden", cursor: "pointer",
+      transition: "transform 0.15s, border-color 0.15s",
+    }}
+      onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.borderColor = event.color + "88"; }}
+      onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.borderColor = "#222"; }}
+    >
+      <div style={{
+        background: event.gradient, padding: "24px 20px 16px",
+        position: "relative", overflow: "hidden"
+      }}>
+        <div style={{
+          position: "absolute", top: -20, right: -20, fontSize: 80,
+          opacity: 0.15, transform: "rotate(-10deg)"
+        }}>{event.emoji}</div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+          <div>
+            <span style={{
+              fontSize: 10, fontWeight: 700, padding: "2px 10px", borderRadius: 20,
+              background: "rgba(0,0,0,0.3)", color: "#fff",
+              textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "monospace"
+            }}>{event.type}</span>
+            <h3 style={{ margin: "8px 0 4px", fontSize: 18, fontWeight: 900, color: "#fff", lineHeight: 1.2 }}>{event.name}</h3>
+          </div>
+          <div style={{ fontSize: 32 }}>{event.emoji}</div>
+        </div>
+        <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
+          <span style={{ fontSize: 12, color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>📅 {event.date}</span>
+          <span style={{ fontSize: 12, color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>🕐 {event.time}</span>
+        </div>
+      </div>
+      <div style={{ padding: "14px 16px" }}>
+        <div style={{ fontSize: 12, color: "#666", marginBottom: 10 }}>📍 {event.location}</div>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
+          {event.lineup.map(a => (
+            <span key={a} style={{
+              fontSize: 11, padding: "3px 10px", borderRadius: 20,
+              background: event.color + "22", color: event.color,
+              border: `1px solid ${event.color}44`, fontWeight: 600
+            }}>{a}</span>
+          ))}
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ fontSize: 12, color: "#555" }}>👥 {event.confirmed} confirmados</div>
+          <div style={{
+            background: event.color, color: "#000",
+            fontSize: 12, fontWeight: 800, padding: "6px 16px", borderRadius: 20
+          }}>
+            A partir de {event.tickets.find(t => t.available)?.price}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EventDetail({ event, onClose }) {
+  return (
+    <div style={{
+      position: "fixed", inset: 0, background: "rgba(0,0,0,0.9)",
+      zIndex: 500, display: "flex", alignItems: "flex-end",
+      backdropFilter: "blur(4px)"
+    }} onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} style={{
+        width: "100%", maxWidth: 480, margin: "0 auto",
+        background: "#0d0d0d", borderRadius: "24px 24px 0 0",
+        border: `1px solid ${event.color}44`,
+        maxHeight: "92vh", overflowY: "auto", padding: "0 0 40px",
+      }}>
+        <div style={{ height: 4, width: 40, background: "#333", borderRadius: 2, margin: "14px auto 0" }} />
+        <div style={{ background: event.gradient, padding: "20px 20px 24px", position: "relative", overflow: "hidden" }}>
+          <div style={{ position: "absolute", top: -30, right: -30, fontSize: 120, opacity: 0.1 }}>{event.emoji}</div>
+          <button onClick={onClose} style={{
+            position: "absolute", top: 12, right: 12,
+            background: "rgba(0,0,0,0.3)", border: "none", color: "#fff",
+            width: 32, height: 32, borderRadius: "50%", cursor: "pointer",
+            fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center"
+          }}>✕</button>
+          <span style={{
+            fontSize: 10, fontWeight: 700, padding: "2px 10px", borderRadius: 20,
+            background: "rgba(0,0,0,0.3)", color: "#fff",
+            textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "monospace"
+          }}>{event.type}</span>
+          <h2 style={{ margin: "8px 0 4px", fontSize: 24, fontWeight: 900, color: "#fff" }}>{event.name}</h2>
+          <div style={{ display: "flex", gap: 14, marginTop: 6 }}>
+            <span style={{ fontSize: 13, color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>📅 {event.date}</span>
+            <span style={{ fontSize: 13, color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>🕐 {event.time}</span>
+          </div>
+          <div style={{ fontSize: 12, color: "rgba(255,255,255,0.75)", marginTop: 4 }}>📍 {event.location}</div>
+        </div>
+        <div style={{ padding: "16px 20px", borderBottom: "1px solid #1a1a1a" }}>
+          <h4 style={{ margin: "0 0 8px", fontSize: 11, color: "#555", fontFamily: "monospace", letterSpacing: "0.08em" }}>SOBRE O EVENTO</h4>
+          <p style={{ margin: 0, fontSize: 14, color: "#aaa", lineHeight: 1.6 }}>{event.description}</p>
+        </div>
+        <div style={{ padding: "16px 20px", borderBottom: "1px solid #1a1a1a" }}>
+          <h4 style={{ margin: "0 0 12px", fontSize: 11, color: "#555", fontFamily: "monospace", letterSpacing: "0.08em" }}>🎵 LINEUP</h4>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {event.lineup.map((a, i) => (
+              <div key={a} style={{
+                display: "flex", alignItems: "center", gap: 12,
+                background: "#111", borderRadius: 12, padding: "10px 14px",
+                border: `1px solid ${event.color}22`
+              }}>
+                <div style={{
+                  width: 28, height: 28, borderRadius: "50%",
+                  background: event.color + "22", color: event.color,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 11, fontWeight: 800
+                }}>{i + 1}</div>
+                <span style={{ fontSize: 14, color: "#ddd", fontWeight: 600 }}>{a}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div style={{ padding: "16px 20px" }}>
+          <h4 style={{ margin: "0 0 12px", fontSize: 11, color: "#555", fontFamily: "monospace", letterSpacing: "0.08em" }}>🎟 INGRESSOS</h4>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
+            {event.tickets.map(t => (
+              <div key={t.lote} style={{
+                display: "flex", justifyContent: "space-between", alignItems: "center",
+                background: "#111", borderRadius: 12, padding: "12px 14px",
+                border: t.available ? `1px solid ${event.color}33` : "1px solid #1a1a1a",
+                opacity: t.available ? 1 : 0.5
+              }}>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: t.available ? "#ddd" : "#555" }}>{t.lote}</div>
+                  {!t.available && <div style={{ fontSize: 10, color: "#555" }}>Esgotado</div>}
+                </div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: t.available ? event.color : "#444" }}>{t.price}</div>
+              </div>
+            ))}
+          </div>
+          <a href={event.ticketLink} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>
+            <button style={{
+              width: "100%", padding: 14, background: event.gradient,
+              border: "none", borderRadius: 14, color: "#fff",
+              fontSize: 15, fontWeight: 800, cursor: "pointer",
+            }}>🎟 Garantir Ingresso</button>
+          </a>
+          <div style={{ textAlign: "center", fontSize: 11, color: "#444", marginTop: 8 }}>
+            Você será redirecionado para a plataforma de ingressos
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // FIX 1: O mapa agora é destruído corretamente quando troca de aba
 function MapView({ places, onSelectPlace, isActive }) {
   const mapRef = useRef(null);
@@ -526,10 +761,12 @@ function MapView({ places, onSelectPlace, isActive }) {
 export default function App() {
   const [tab, setTab] = useState("discover");
   const [selected, setSelected] = useState(null);
+  const [selectedEvent, setSelectedEvent] = useState(null);
   const [showPrefs, setShowPrefs] = useState(false);
   const [prefs, setPrefs] = useState(null);
   const [filterVibe, setFilterVibe] = useState("All");
   const [filterType, setFilterType] = useState("All");
+  const [filterEventType, setFilterEventType] = useState("Todos");
   const [search, setSearch] = useState("");
 
   const filtered = PLACES.filter(p => {
@@ -544,6 +781,10 @@ export default function App() {
     }
     return true;
   });
+
+  const filteredEvents = EVENTS.filter(e =>
+    filterEventType === "Todos" || e.type === filterEventType
+  );
 
   return (
     <div style={{
@@ -706,6 +947,41 @@ export default function App() {
             <div style={{ fontSize: 13, color: "#444", marginTop: 8 }}>Salve seus lugares favoritos para encontrá-los rápido</div>
           </div>
         )}
+
+        {tab === "festas" && (
+          <div style={{ padding: "0 16px 100px" }}>
+            {/* Header */}
+            <div style={{ padding: "20px 0 12px" }}>
+              <h2 style={{ margin: "0 0 2px", fontSize: 24, fontWeight: 800, color: "#f5f5f5" }}>Festas & Shows 🎉</h2>
+              <p style={{ margin: "0 0 14px", fontSize: 13, color: "#555" }}>Eventos próximos em São José dos Campos</p>
+              {/* Filtros */}
+              <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 8, scrollbarWidth: "none" }}>
+                {EVENT_TYPES.map(t => (
+                  <button key={t} onClick={() => setFilterEventType(t)} style={{
+                    flexShrink: 0, padding: "5px 14px", borderRadius: 20,
+                    background: filterEventType === t ? "#f5f5f5" : "#111",
+                    color: filterEventType === t ? "#080808" : "#666",
+                    border: filterEventType === t ? "none" : "1px solid #222",
+                    fontSize: 12, fontWeight: 600, cursor: "pointer"
+                  }}>{t}</button>
+                ))}
+              </div>
+            </div>
+            {/* Cards */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              {filteredEvents.map(event => (
+                <EventCard key={event.id} event={event} onClick={setSelectedEvent} />
+              ))}
+              {filteredEvents.length === 0 && (
+                <div style={{ textAlign: "center", padding: "60px 20px", color: "#555" }}>
+                  <div style={{ fontSize: 40, marginBottom: 12 }}>🎉</div>
+                  <div style={{ fontSize: 16, fontWeight: 600 }}>Nenhum evento nessa categoria</div>
+                  <div style={{ fontSize: 13, marginTop: 6 }}>Tenta outro filtro!</div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* FIX 4: Barra de navegação com z-index alto para ficar sempre acima do mapa */}
@@ -722,6 +998,7 @@ export default function App() {
           {[
             { id: "discover", icon: "🌐", label: "Descobrir" },
             { id: "map", icon: "🗺", label: "Mapa" },
+            { id: "festas", icon: "🎉", label: "Festas" },
             { id: "live", icon: "🔴", label: "Ao Vivo" },
             { id: "saved", icon: "♡", label: "Salvos" }
           ].map(t => (
@@ -741,6 +1018,7 @@ export default function App() {
       </div>
 
       {selected && <PlaceDetail place={selected} onClose={() => setSelected(null)} />}
+      {selectedEvent && <EventDetail event={selectedEvent} onClose={() => setSelectedEvent(null)} />}
       {showPrefs && <PreferencesModal onClose={() => setShowPrefs(false)} onApply={setPrefs} />}
     </div>
   );
