@@ -515,8 +515,7 @@ function EventCard({ event, onClick }) {
             }}>{a}</span>
           ))}
         </div>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div 
+        <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center" }}>
           <div style={{
             background: event.color, color: "#000",
             fontSize: 12, fontWeight: 800, padding: "6px 16px", borderRadius: 20
@@ -797,6 +796,7 @@ export default function App() {
           address: e.address,
           description: e.description,
           lineup: e.lineup || [],
+          confirmed: e.confirmed || 0,
           color: e.color || "#A78BFA",
           gradient: e.gradient || `linear-gradient(135deg, ${e.color || "#A78BFA"}, #60A5FA)`,
           emoji: e.emoji || "🎉",
