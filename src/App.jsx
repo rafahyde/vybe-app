@@ -205,7 +205,7 @@ function PlaceDetail({ place, onClose }) {
   return (
     <div style={{
       position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)",
-      zIndex: 200, display: "flex", alignItems: "flex-end",
+      zIndex: 500, display: "flex", alignItems: "flex-end",
       backdropFilter: "blur(4px)"
     }} onClick={onClose}>
       <div onClick={e => e.stopPropagation()} style={{
@@ -323,7 +323,7 @@ function PreferencesModal({ onClose, onApply }) {
   return (
     <div style={{
       position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)",
-      zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center",
+      zIndex: 600, display: "flex", alignItems: "center", justifyContent: "center",
       backdropFilter: "blur(4px)", padding: 20
     }} onClick={onClose}>
       <div onClick={e => e.stopPropagation()} style={{
@@ -385,12 +385,23 @@ function PreferencesModal({ onClose, onApply }) {
   );
 }
 
-function MapView({ places, onSelectPlace }) {
+// FIX 1: O mapa agora é destruído corretamente quando troca de aba
+function MapView({ places, onSelectPlace, isActive }) {
   const mapRef = useRef(null);
   const leafletMapRef = useRef(null);
   const markersRef = useRef([]);
 
   useEffect(() => {
+    if (!isActive) {
+      // Destrói o mapa quando a aba não está ativa
+      if (leafletMapRef.current) {
+        leafletMapRef.current.remove();
+        leafletMapRef.current = null;
+        markersRef.current = [];
+      }
+      return;
+    }
+
     if (leafletMapRef.current) return;
 
     if (!document.getElementById("leaflet-css")) {
@@ -475,15 +486,18 @@ function MapView({ places, onSelectPlace }) {
       if (leafletMapRef.current) {
         leafletMapRef.current.remove();
         leafletMapRef.current = null;
+        markersRef.current = [];
       }
     };
-  }, []);
+  }, [isActive]);
 
   return (
-    <div style={{ position: "relative", height: "100%", width: "100%" }}>
+    // FIX 2: z-index do mapa agora é menor que o da barra de navegação
+    <div style={{ position: "relative", height: "100%", width: "100%", zIndex: 1 }}>
       <div ref={mapRef} style={{ height: "100%", width: "100%", borderRadius: 0 }} />
+
       <div style={{
-        position: "absolute", top: 16, left: 16, zIndex: 1000,
+        position: "absolute", top: 16, left: 16, zIndex: 10,
         background: "rgba(10,10,10,0.85)", borderRadius: 12,
         border: "1px solid #222", padding: "10px 14px",
         backdropFilter: "blur(8px)"
@@ -495,9 +509,10 @@ function MapView({ places, onSelectPlace }) {
           </div>
         ))}
       </div>
+
       <div style={{
         position: "absolute", bottom: 100, left: "50%", transform: "translateX(-50%)",
-        zIndex: 1000, background: "rgba(10,10,10,0.85)", borderRadius: 20,
+        zIndex: 10, background: "rgba(10,10,10,0.85)", borderRadius: 20,
         border: "1px solid #222", padding: "6px 14px",
         fontSize: 12, color: "#777", whiteSpace: "nowrap",
         backdropFilter: "blur(8px)"
@@ -537,6 +552,7 @@ export default function App() {
       fontFamily: "system-ui, -apple-system, sans-serif",
       display: "flex", flexDirection: "column", overflow: "hidden"
     }}>
+
       {tab === "discover" && (
         <div style={{
           background: "linear-gradient(180deg, #080808 80%, transparent)",
@@ -599,7 +615,7 @@ export default function App() {
       {tab === "map" && (
         <div style={{
           padding: "20px 20px 12px", flexShrink: 0,
-          background: "#080808"
+          background: "#080808", position: "relative", zIndex: 2
         }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
@@ -621,6 +637,7 @@ export default function App() {
       )}
 
       <div style={{ flex: 1, overflow: tab === "map" ? "hidden" : "auto", position: "relative" }}>
+
         {tab === "discover" && (
           <div style={{ padding: "0 16px 100px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, padding: "0 4px" }}>
@@ -645,9 +662,10 @@ export default function App() {
           </div>
         )}
 
+        {/* FIX 3: MapView agora recebe isActive para saber quando deve existir */}
         {tab === "map" && (
           <div style={{ height: "100%", width: "100%" }}>
-            <MapView places={PLACES} onSelectPlace={setSelected} />
+            <MapView places={PLACES} onSelectPlace={setSelected} isActive={tab === "map"} />
           </div>
         )}
 
@@ -690,10 +708,12 @@ export default function App() {
         )}
       </div>
 
+      {/* FIX 4: Barra de navegação com z-index alto para ficar sempre acima do mapa */}
       <div style={{
         position: "absolute", bottom: 0, left: 0, right: 0,
         background: "linear-gradient(0deg, #080808 60%, transparent)",
-        padding: "16px 20px 24px", flexShrink: 0
+        padding: "16px 20px 24px", flexShrink: 0,
+        zIndex: 400,
       }}>
         <div style={{
           display: "flex", background: "#111",
@@ -710,7 +730,8 @@ export default function App() {
               background: tab === t.id ? "#1e1e1e" : "transparent",
               border: "none", borderRadius: 12, cursor: "pointer",
               color: tab === t.id ? "#f5f5f5" : "#555",
-              fontSize: 11, fontWeight: 600
+              fontSize: 11, fontWeight: 600,
+              position: "relative", zIndex: 400,
             }}>
               <div style={{ fontSize: 16, marginBottom: 1 }}>{t.icon}</div>
               {t.label}
