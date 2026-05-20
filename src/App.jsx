@@ -758,286 +758,309 @@ function MapView({ places, onSelectPlace, isActive }) {
   );
 }
 
-
-function HomeMapView({ places, onSelectPlace, onAreaChange }) {
-  const mapRef = useRef(null);
-  const leafletMapRef = useRef(null);
-  const markersRef = useRef([]);
-  const allPlacesRef = useRef(places);
-
-  useEffect(() => {
-    allPlacesRef.current = places;
-  }, [places]);
-
-  useEffect(() => {
-    if (leafletMapRef.current) return;
-    if (mapRef.current && mapRef.current._leaflet_id) return;
-
-    if (!document.getElementById("leaflet-css")) {
-      const link = document.createElement("link");
-      link.id = "leaflet-css";
-      link.rel = "stylesheet";
-      link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
-      document.head.appendChild(link);
-    }
-
-    const initMap = () => {
-      if (!window.L || !mapRef.current) return;
-      if (mapRef.current._leaflet_id) return;
-      const L = window.L;
-
-      const map = L.map(mapRef.current, {
-        center: [-23.1891, -45.8841],
-        zoom: 14,
-        zoomControl: false,
-      });
-
-      L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-        attribution: "© OpenStreetMap © CARTO",
-        subdomains: "abcd",
-        maxZoom: 19
-      }).addTo(map);
-
-      L.control.zoom({ position: "bottomright" }).addTo(map);
-
-      // User location dot
-      const userIcon = L.divIcon({
-        html: `<div style="width:14px;height:14px;background:#60A5FA;border:2.5px solid #fff;border-radius:50%;box-shadow:0 0 0 5px rgba(96,165,250,0.25)"></div>`,
-        className: "", iconSize: [14, 14], iconAnchor: [7, 7],
-      });
-      L.marker([-23.1860, -45.8870], { icon: userIcon }).addTo(map)
-        .bindPopup("<b>Você está aqui</b>");
-
-      // Add markers for all places
-      const addMarkers = (placeList) => {
-        markersRef.current.forEach(m => m.remove());
-        markersRef.current = [];
-        placeList.forEach(place => {
-          const icon = L.divIcon({
-            html: `<div style="background:${place.color};color:#000;border-radius:20px;padding:5px 10px;font-size:11px;font-weight:800;white-space:nowrap;box-shadow:0 2px 12px ${place.color}88;border:2px solid rgba(255,255,255,0.2);cursor:pointer;display:flex;align-items:center;gap:4px;">${place.crowd >= 90 ? "🔴" : place.crowd >= 65 ? "🟡" : "🟢"} ${place.name}</div>`,
-            className: "", iconAnchor: [0, 0],
-          });
-          const marker = L.marker([place.lat, place.lng], { icon })
-            .addTo(map)
-            .on("click", () => onSelectPlace(place));
-          markersRef.current.push(marker);
-        });
-      };
-
-      addMarkers(places);
-
-      // Update cards when map stops moving
-      const updateVisiblePlaces = () => {
-        const bounds = map.getBounds();
-        const visible = allPlacesRef.current.filter(p =>
-          bounds.contains([p.lat, p.lng])
-        );
-        onAreaChange(visible.length > 0 ? visible : allPlacesRef.current);
-      };
-
-      map.on("moveend", updateVisiblePlaces);
-      map.on("zoomend", updateVisiblePlaces);
-
-      leafletMapRef.current = map;
-      setTimeout(() => map.invalidateSize(), 100);
-    };
-
-    if (window.L) {
-      initMap();
-    } else {
-      const script = document.createElement("script");
-      script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
-      script.onload = initMap;
-      document.head.appendChild(script);
-    }
-
-    return () => {
-      if (leafletMapRef.current) {
-        leafletMapRef.current.remove();
-        leafletMapRef.current = null;
-        markersRef.current = [];
-      }
-    };
-  }, []);
-
-  return <div ref={mapRef} style={{ height: "100%", width: "100%" }} />;
-}
-
 export default function App() {
-  const [tab, setTab] = useState("home");
+  const [tab, setTab] = useState("discover");
   const [selected, setSelected] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [showPrefs, setShowPrefs] = useState(false);
   const [prefs, setPrefs] = useState(null);
+  const [filterVibe, setFilterVibe] = useState("All");
+  const [filterType, setFilterType] = useState("All");
   const [filterEventType, setFilterEventType] = useState("Todos");
+  const [search, setSearch] = useState("");
   const [events, setEvents] = useState(EVENTS);
   const [loadingEvents, setLoadingEvents] = useState(true);
-  const [areaPlaces, setAreaPlaces] = useState(PLACES);
 
+  // Busca eventos do Supabase
   useEffect(() => {
     const fetchEvents = async () => {
       setLoadingEvents(true);
-      const { data, error } = await supabase.from("events").select("*").order("created_at", { ascending: false });
+      const { data, error } = await supabase
+        .from("events")
+        .select("*")
+        .order("created_at", { ascending: false });
+
       if (error) {
+        console.error("Erro ao buscar eventos:", error);
+        // Se der erro, mantém os eventos de exemplo
         setEvents(EVENTS);
       } else if (data && data.length > 0) {
+        // Formata os dados do Supabase para o formato do app
         const formatted = data.map(e => ({
-          id: e.id, name: e.name, type: e.type, date: e.date, time: e.time,
-          location: e.location, address: e.address, description: e.description,
-          lineup: e.lineup || [], color: e.color || "#A78BFA",
+          id: e.id,
+          name: e.name,
+          type: e.type,
+          date: e.date,
+          time: e.time,
+          location: e.location,
+          address: e.address,
+          description: e.description,
+          lineup: e.lineup || [],
+          confirmed: e.confirmed || 0,
+          color: e.color || "#A78BFA",
           gradient: e.gradient || `linear-gradient(135deg, ${e.color || "#A78BFA"}, #60A5FA)`,
-          emoji: e.emoji || "🎉", tickets: e.tickets || [], ticketLink: e.ticket_link || "#",
+          emoji: e.emoji || "🎉",
+          tickets: e.tickets || [],
+          ticketLink: e.ticket_link || "#",
         }));
         setEvents(formatted);
       } else {
+        // Se não tiver eventos no banco, usa os de exemplo
         setEvents(EVENTS);
       }
       setLoadingEvents(false);
     };
+
     fetchEvents();
   }, []);
 
-  const filteredEvents = events.filter(e => filterEventType === "Todos" || e.type === filterEventType);
+  const filtered = PLACES.filter(p => {
+    if (filterVibe !== "All" && p.vibe !== filterVibe) return false;
+    if (filterType !== "All" && p.type !== filterType) return false;
+    if (search && !p.name.toLowerCase().includes(search.toLowerCase()) &&
+      !p.tags.some(t => t.includes(search.toLowerCase()))) return false;
+    if (prefs) {
+      if (prefs.vibePrefs.length && !prefs.vibePrefs.includes(p.vibe)) return false;
+      if (prefs.typePrefs.length && !prefs.typePrefs.includes(p.type)) return false;
+      if (p.crowd > prefs.maxCrowd) return false;
+    }
+    return true;
+  });
+
+  const filteredEvents = events.filter(e =>
+    filterEventType === "Todos" || e.type === filterEventType
+  );
 
   return (
-    <div style={{ height: "100vh", background: "#080808", color: "#f5f5f5", maxWidth: 480, margin: "0 auto", position: "relative", fontFamily: "system-ui, -apple-system, sans-serif", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+    <div style={{
+      height: "100vh", background: "#080808", color: "#f5f5f5",
+      maxWidth: 480, margin: "0 auto", position: "relative",
+      fontFamily: "system-ui, -apple-system, sans-serif",
+      display: "flex", flexDirection: "column", overflow: "hidden"
+    }}>
 
-      {/* HOME — Mapa como tela principal estilo Airbnb */}
-      {tab === "home" && (
-        <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
-
-          {/* Header flutuante sobre o mapa */}
-          <div style={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 100, padding: "20px 16px 12px", background: "linear-gradient(180deg, rgba(8,8,8,0.95) 60%, transparent)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-              <h1 style={{ margin: 0, fontSize: 26, fontWeight: 900, background: "linear-gradient(90deg, #A78BFA, #F472B6, #FF6B6B)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>vybe.</h1>
-              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                <div style={{ background: "rgba(0,0,0,0.7)", border: "1px solid #333", borderRadius: 20, padding: "5px 12px", fontSize: 11, color: "#aaa", backdropFilter: "blur(8px)" }}>📍 SJC, SP</div>
-                <button onClick={() => setShowPrefs(true)} style={{ background: prefs ? "#A78BFA22" : "rgba(0,0,0,0.7)", border: prefs ? "1px solid #A78BFA55" : "1px solid #333", borderRadius: 20, padding: "5px 12px", color: prefs ? "#A78BFA" : "#888", cursor: "pointer", fontSize: 11, fontWeight: 600, backdropFilter: "blur(8px)" }}>
-                  {prefs ? "⚡ On" : "⚡ Filtros"}
-                </button>
-              </div>
+      {tab === "discover" && (
+        <div style={{
+          background: "linear-gradient(180deg, #080808 80%, transparent)",
+          padding: "20px 20px 0", flexShrink: 0
+        }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+            <div>
+              <h1 style={{
+                margin: 0, fontSize: 28, fontWeight: 800,
+                background: "linear-gradient(90deg, #A78BFA, #F472B6, #FF6B6B)",
+                WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent"
+              }}>vybe.</h1>
+              <div style={{ fontSize: 11, color: "#444", marginTop: 1 }}>📍 São José dos Campos, SP</div>
             </div>
-            {/* Filtros de tipo flutuantes */}
-            <div style={{ display: "flex", gap: 6, overflowX: "auto", scrollbarWidth: "none" }}>
-              {TYPES.map(t => (
-                <button key={t} onClick={() => {
-                  if (t === "All") setAreaPlaces(PLACES);
-                  else setAreaPlaces(PLACES.filter(p => p.type === t));
-                }} style={{ flexShrink: 0, padding: "5px 12px", borderRadius: 20, background: "rgba(0,0,0,0.75)", color: "#aaa", border: "1px solid #333", fontSize: 11, fontWeight: 600, cursor: "pointer", textTransform: "capitalize", backdropFilter: "blur(8px)" }}>{t === "All" ? "Todos" : t}</button>
-              ))}
-            </div>
+            <button onClick={() => setShowPrefs(true)} style={{
+              background: prefs ? "#A78BFA22" : "#111",
+              border: prefs ? "1px solid #A78BFA55" : "1px solid #222",
+              borderRadius: 20, padding: "8px 14px",
+              color: prefs ? "#A78BFA" : "#888", cursor: "pointer",
+              fontSize: 12, fontWeight: 600, display: "flex", gap: 6, alignItems: "center"
+            }}>
+              <span>⚡</span>{prefs ? "Prefs On" : "Meu Vybe"}
+            </button>
           </div>
-
-          {/* Mapa ocupa toda a tela */}
-          <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
-            <HomeMapView places={areaPlaces} onSelectPlace={setSelected} onAreaChange={setAreaPlaces} />
+          <div style={{ marginBottom: 10 }}>
+            <input value={search} onChange={e => setSearch(e.target.value)}
+              placeholder="🔍  buscar lugares, música, tags..."
+              style={{
+                width: "100%", background: "#111", border: "1px solid #222",
+                borderRadius: 12, padding: "10px 14px",
+                color: "#ddd", fontSize: 14, outline: "none",
+                fontFamily: "inherit", boxSizing: "border-box"
+              }}
+            />
           </div>
-
-          {/* Cards deslizantes na parte inferior */}
-          <div style={{ position: "absolute", bottom: 80, left: 0, right: 0, zIndex: 100 }}>
-            <div style={{ padding: "0 0 8px 16px", display: "flex", gap: 10, overflowX: "auto", scrollbarWidth: "none" }}>
-              {areaPlaces.length === 0 ? (
-                <div style={{ background: "rgba(13,13,13,0.95)", border: "1px solid #222", borderRadius: 16, padding: "14px 20px", backdropFilter: "blur(12px)", whiteSpace: "nowrap" }}>
-                  <div style={{ fontSize: 13, color: "#555" }}>Nenhum lugar nessa área</div>
-                </div>
-              ) : (
-                areaPlaces.map(place => (
-                  <div key={place.id} onClick={() => setSelected(place)} style={{ flexShrink: 0, width: 180, background: "rgba(13,13,13,0.95)", border: `1px solid ${place.color}44`, borderRadius: 16, padding: "12px 14px", cursor: "pointer", backdropFilter: "blur(12px)", transition: "transform 0.15s", }}
-                    onMouseEnter={e => e.currentTarget.style.transform = "translateY(-3px)"}
-                    onMouseLeave={e => e.currentTarget.style.transform = ""}
-                  >
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
-                      <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 20, background: place.color + "22", color: place.color, textTransform: "uppercase", fontFamily: "monospace" }}>{place.type}</span>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: "#f0f0f0" }}>⭐ {place.rating}</span>
-                    </div>
-                    <div style={{ fontSize: 13, fontWeight: 800, color: "#f0f0f0", marginBottom: 3 }}>{place.name}</div>
-                    <div style={{ fontSize: 10, color: "#555", marginBottom: 8 }}>{place.distance} · {place.cover}</div>
-                    <div style={{ height: 3, borderRadius: 2, background: "#1e1e1e", overflow: "hidden", marginBottom: 3 }}>
-                      <div style={{ height: "100%", width: `${place.crowd}%`, borderRadius: 2, background: `linear-gradient(90deg, ${crowdColor(place.crowd)}99, ${crowdColor(place.crowd)})` }} />
-                    </div>
-                    <div style={{ fontSize: 9, fontWeight: 700, color: crowdColor(place.crowd) }}>{crowdEmoji(place.crowd)} {place.crowd}% {crowdLabel(place.crowd)}</div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-        </div>
-      )}
-
-      {tab === "festas" && (
-        <div style={{ flex: 1, overflow: "auto" }}>
-          <div style={{ padding: "20px 16px 0", background: "#080808" }}>
-            <h2 style={{ margin: "0 0 2px", fontSize: 24, fontWeight: 800, color: "#f5f5f5" }}>Festas & Shows 🎉</h2>
-            <p style={{ margin: "0 0 14px", fontSize: 13, color: "#555" }}>Eventos próximos em São José dos Campos</p>
-            <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 8, scrollbarWidth: "none" }}>
-              {EVENT_TYPES.map(t => (
-                <button key={t} onClick={() => setFilterEventType(t)} style={{ flexShrink: 0, padding: "5px 14px", borderRadius: 20, background: filterEventType === t ? "#f5f5f5" : "#111", color: filterEventType === t ? "#080808" : "#666", border: filterEventType === t ? "none" : "1px solid #222", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>{t}</button>
-              ))}
-            </div>
-          </div>
-          <div style={{ padding: "12px 16px 100px", display: "flex", flexDirection: "column", gap: 14 }}>
-            {loadingEvents ? (
-              <div style={{ textAlign: "center", padding: "60px 20px", color: "#555" }}>
-                <div style={{ fontSize: 40, marginBottom: 12 }}>⏳</div>
-                <div style={{ fontSize: 16, fontWeight: 600 }}>Carregando eventos...</div>
-              </div>
-            ) : filteredEvents.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "60px 20px", color: "#555" }}>
-                <div style={{ fontSize: 40, marginBottom: 12 }}>🎉</div>
-                <div style={{ fontSize: 16, fontWeight: 600 }}>Nenhum evento nessa categoria</div>
-              </div>
-            ) : (
-              filteredEvents.map(event => (<EventCard key={event.id} event={event} onClick={setSelectedEvent} />))
-            )}
-          </div>
-        </div>
-      )}
-
-      {tab === "live" && (
-        <div style={{ flex: 1, overflow: "auto", padding: "20px 16px 100px" }}>
-          <h2 style={{ margin: "0 0 4px", fontSize: 22, fontWeight: 800, color: "#f5f5f5" }}>Ao Vivo 🔴</h2>
-          <p style={{ margin: "0 0 20px", fontSize: 13, color: "#555" }}>Updates em tempo real de quem está lá agora</p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {PLACES.flatMap(p => p.reports.map(r => ({ ...r, place: p }))).map((r, i) => (
-              <div key={i} onClick={() => setSelected(r.place)} style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 14, padding: "12px 14px", cursor: "pointer", borderLeft: `3px solid ${r.place.color}` }}>
-                <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-                  <Avatar initials={r.avatar} color={r.place.color} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 4 }}>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: r.place.color }}>{r.place.name}</span>
-                      <span style={{ fontSize: 10, color: "#444" }}>·</span>
-                      <span style={{ fontSize: 11, color: "#555" }}>{r.time}</span>
-                      <span style={{ marginLeft: "auto", fontSize: 16 }}>{r.mood}</span>
-                    </div>
-                    <p style={{ margin: 0, fontSize: 13, color: "#aaa", lineHeight: 1.4 }}>{r.msg}</p>
-                    <div style={{ fontSize: 11, color: "#444", marginTop: 4 }}>por {r.user}</div>
-                  </div>
-                </div>
-              </div>
+          <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 12, scrollbarWidth: "none" }}>
+            {TYPES.map(t => (
+              <button key={t} onClick={() => setFilterType(t)} style={{
+                flexShrink: 0, padding: "5px 12px", borderRadius: 20,
+                background: filterType === t ? "#f5f5f5" : "#111",
+                color: filterType === t ? "#080808" : "#666",
+                border: filterType === t ? "none" : "1px solid #222",
+                fontSize: 12, fontWeight: 600, cursor: "pointer", textTransform: "capitalize"
+              }}>{t}</button>
+            ))}
+            <div style={{ width: 1, background: "#222", margin: "0 4px", flexShrink: 0 }} />
+            {VIBES.slice(1).map(v => (
+              <button key={v} onClick={() => setFilterVibe(filterVibe === v ? "All" : v)} style={{
+                flexShrink: 0, padding: "5px 12px", borderRadius: 20,
+                background: filterVibe === v ? "#A78BFA22" : "transparent",
+                color: filterVibe === v ? "#A78BFA" : "#555",
+                border: filterVibe === v ? "1px solid #A78BFA44" : "1px solid #1a1a1a",
+                fontSize: 12, fontWeight: 600, cursor: "pointer"
+              }}>{v}</button>
             ))}
           </div>
         </div>
       )}
 
-      {tab === "saved" && (
-        <div style={{ flex: 1, overflow: "auto", padding: "20px 16px 100px", textAlign: "center", paddingTop: 80 }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>♡</div>
-          <div style={{ fontSize: 18, fontWeight: 700, color: "#555" }}>Nenhum lugar salvo</div>
-          <div style={{ fontSize: 13, color: "#444", marginTop: 8 }}>Salve seus lugares favoritos para encontrá-los rápido</div>
+      {tab === "map" && (
+        <div style={{
+          padding: "20px 20px 12px", flexShrink: 0,
+          background: "#080808", position: "relative", zIndex: 2
+        }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div>
+              <h1 style={{
+                margin: 0, fontSize: 28, fontWeight: 800,
+                background: "linear-gradient(90deg, #A78BFA, #F472B6, #FF6B6B)",
+                WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent"
+              }}>vybe.</h1>
+              <div style={{ fontSize: 11, color: "#444", marginTop: 1 }}>📍 São José dos Campos, SP</div>
+            </div>
+            <div style={{
+              background: "#111", border: "1px solid #222", borderRadius: 20,
+              padding: "6px 12px", fontSize: 12, color: "#666"
+            }}>
+              {PLACES.length} lugares
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Barra de navegação */}
-      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "linear-gradient(0deg, #080808 60%, transparent)", padding: "16px 20px 24px", zIndex: 400 }}>
-        <div style={{ display: "flex", background: "#111", border: "1px solid #1e1e1e", borderRadius: 16, padding: 4, gap: 4 }}>
+      <div style={{ flex: 1, overflow: tab === "map" ? "hidden" : "auto", position: "relative" }}>
+
+        {tab === "discover" && (
+          <div style={{ padding: "0 16px 100px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, padding: "0 4px" }}>
+              <span style={{ fontSize: 13, color: "#555" }}>{filtered.length} lugares próximos</span>
+              <div style={{ flex: 1, height: 1, background: "#1a1a1a" }} />
+              <span style={{ fontSize: 11, color: "#444", fontFamily: "monospace" }}>
+                {new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+              </span>
+            </div>
+            {filtered.length === 0 && (
+              <div style={{ textAlign: "center", padding: "60px 20px", color: "#555" }}>
+                <div style={{ fontSize: 40, marginBottom: 12 }}>🔍</div>
+                <div style={{ fontSize: 16, fontWeight: 600 }}>Nenhum lugar nos filtros</div>
+                <div style={{ fontSize: 13, marginTop: 6 }}>Tenta ajustar suas preferências</div>
+              </div>
+            )}
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {filtered.map(place => (
+                <PlaceCard key={place.id} place={place} onClick={setSelected} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* FIX 3: MapView agora recebe isActive para saber quando deve existir */}
+        {tab === "map" && (
+          <div style={{ height: "100%", width: "100%" }}>
+            <MapView places={PLACES} onSelectPlace={setSelected} isActive={tab === "map"} />
+          </div>
+        )}
+
+        {tab === "live" && (
+          <div style={{ padding: "20px 16px 100px" }}>
+            <h2 style={{ margin: "0 0 4px", fontSize: 22, fontWeight: 800, color: "#f5f5f5" }}>Ao Vivo 🔴</h2>
+            <p style={{ margin: "0 0 20px", fontSize: 13, color: "#555" }}>Updates em tempo real de quem está lá agora</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {PLACES.flatMap(p => p.reports.map(r => ({ ...r, place: p }))).map((r, i) => (
+                <div key={i} onClick={() => setSelected(r.place)} style={{
+                  background: "#111", border: "1px solid #1e1e1e",
+                  borderRadius: 14, padding: "12px 14px", cursor: "pointer",
+                  borderLeft: `3px solid ${r.place.color}`
+                }}>
+                  <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                    <Avatar initials={r.avatar} color={r.place.color} />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 4 }}>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: r.place.color }}>{r.place.name}</span>
+                        <span style={{ fontSize: 10, color: "#444" }}>·</span>
+                        <span style={{ fontSize: 11, color: "#555" }}>{r.time}</span>
+                        <span style={{ marginLeft: "auto", fontSize: 16 }}>{r.mood}</span>
+                      </div>
+                      <p style={{ margin: 0, fontSize: 13, color: "#aaa", lineHeight: 1.4 }}>{r.msg}</p>
+                      <div style={{ fontSize: 11, color: "#444", marginTop: 4 }}>por {r.user}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {tab === "saved" && (
+          <div style={{ padding: "20px 16px 100px", textAlign: "center", paddingTop: 80 }}>
+            <div style={{ fontSize: 48, marginBottom: 16 }}>♡</div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: "#555" }}>Nenhum lugar salvo</div>
+            <div style={{ fontSize: 13, color: "#444", marginTop: 8 }}>Salve seus lugares favoritos para encontrá-los rápido</div>
+          </div>
+        )}
+
+        {tab === "festas" && (
+          <div style={{ padding: "0 16px 100px" }}>
+            {/* Header */}
+            <div style={{ padding: "20px 0 12px" }}>
+              <h2 style={{ margin: "0 0 2px", fontSize: 24, fontWeight: 800, color: "#f5f5f5" }}>Festas & Shows 🎉</h2>
+              <p style={{ margin: "0 0 14px", fontSize: 13, color: "#555" }}>Eventos próximos em São José dos Campos</p>
+              {/* Filtros */}
+              <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 8, scrollbarWidth: "none" }}>
+                {EVENT_TYPES.map(t => (
+                  <button key={t} onClick={() => setFilterEventType(t)} style={{
+                    flexShrink: 0, padding: "5px 14px", borderRadius: 20,
+                    background: filterEventType === t ? "#f5f5f5" : "#111",
+                    color: filterEventType === t ? "#080808" : "#666",
+                    border: filterEventType === t ? "none" : "1px solid #222",
+                    fontSize: 12, fontWeight: 600, cursor: "pointer"
+                  }}>{t}</button>
+                ))}
+              </div>
+            </div>
+            {/* Cards */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              {loadingEvents ? (
+                <div style={{ textAlign: "center", padding: "60px 20px", color: "#555" }}>
+                  <div style={{ fontSize: 40, marginBottom: 12 }}>⏳</div>
+                  <div style={{ fontSize: 16, fontWeight: 600 }}>Carregando eventos...</div>
+                </div>
+              ) : filteredEvents.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "60px 20px", color: "#555" }}>
+                  <div style={{ fontSize: 40, marginBottom: 12 }}>🎉</div>
+                  <div style={{ fontSize: 16, fontWeight: 600 }}>Nenhum evento nessa categoria</div>
+                  <div style={{ fontSize: 13, marginTop: 6 }}>Tenta outro filtro!</div>
+                </div>
+              ) : (
+                filteredEvents.map(event => (
+                  <EventCard key={event.id} event={event} onClick={setSelectedEvent} />
+                ))
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* FIX 4: Barra de navegação com z-index alto para ficar sempre acima do mapa */}
+      <div style={{
+        position: "absolute", bottom: 0, left: 0, right: 0,
+        background: "linear-gradient(0deg, #080808 60%, transparent)",
+        padding: "16px 20px 24px", flexShrink: 0,
+        zIndex: 400,
+      }}>
+        <div style={{
+          display: "flex", background: "#111",
+          border: "1px solid #1e1e1e", borderRadius: 16, padding: 4, gap: 4
+        }}>
           {[
-            { id: "home", icon: "🌐", label: "Início" },
+            { id: "discover", icon: "🌐", label: "Descobrir" },
+            { id: "map", icon: "🗺", label: "Mapa" },
             { id: "festas", icon: "🎉", label: "Festas" },
             { id: "live", icon: "🔴", label: "Ao Vivo" },
             { id: "saved", icon: "♡", label: "Salvos" }
           ].map(t => (
-            <button key={t.id} onClick={() => setTab(t.id)} style={{ flex: 1, padding: "8px 0", background: tab === t.id ? "#1e1e1e" : "transparent", border: "none", borderRadius: 12, cursor: "pointer", color: tab === t.id ? "#f5f5f5" : "#555", fontSize: 11, fontWeight: 600, position: "relative", zIndex: 400 }}>
+            <button key={t.id} onClick={() => setTab(t.id)} style={{
+              flex: 1, padding: "8px 0",
+              background: tab === t.id ? "#1e1e1e" : "transparent",
+              border: "none", borderRadius: 12, cursor: "pointer",
+              color: tab === t.id ? "#f5f5f5" : "#555",
+              fontSize: 11, fontWeight: 600,
+              position: "relative", zIndex: 400,
+            }}>
               <div style={{ fontSize: 16, marginBottom: 1 }}>{t.icon}</div>
               {t.label}
             </button>
