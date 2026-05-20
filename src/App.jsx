@@ -771,6 +771,7 @@ function HomeMapView({ places, onSelectPlace, onAreaChange }) {
 
   useEffect(() => {
     if (leafletMapRef.current) return;
+    if (mapRef.current && mapRef.current._leaflet_id) return;
 
     if (!document.getElementById("leaflet-css")) {
       const link = document.createElement("link");
@@ -782,6 +783,7 @@ function HomeMapView({ places, onSelectPlace, onAreaChange }) {
 
     const initMap = () => {
       if (!window.L || !mapRef.current) return;
+      if (mapRef.current._leaflet_id) return;
       const L = window.L;
 
       const map = L.map(mapRef.current, {
