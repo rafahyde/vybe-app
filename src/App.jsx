@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "./supabase";
+import { supabase } from "./supabase";
 
 const PLACES = [
   {
@@ -1085,6 +1086,18 @@ export default function App() {
 
   const filteredEvents = events.filter(e => filterEventType === "Todos" || e.type === filterEventType);
 
+  if (user === undefined) {
+    return (
+      <div style={{ height: "100vh", background: "#080808", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "system-ui" }}>
+        <div style={{ fontSize: 32, fontWeight: 900, background: "linear-gradient(90deg, #A78BFA, #F472B6, #FF6B6B)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>vybe.</div>
+      </div>
+    );
+  }
+
+  if (user === null && !guest) {
+    return <LoginScreen onLogin={() => {}} onGuest={() => setGuest(true)} />;
+  }
+
   return (
     <div style={{ height: "100vh", background: "#080808", color: "#f5f5f5", maxWidth: 480, margin: "0 auto", position: "relative", fontFamily: "system-ui, -apple-system, sans-serif", display: "flex", flexDirection: "column", overflow: "hidden" }}>
 
@@ -1103,9 +1116,15 @@ export default function App() {
               <h1 style={{ margin: 0, fontSize: 26, fontWeight: 900, background: "linear-gradient(90deg, #A78BFA, #F472B6, #FF6B6B)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>vybe.</h1>
               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                 <div style={{ background: "rgba(0,0,0,0.8)", border: "1px solid #333", borderRadius: 20, padding: "5px 12px", fontSize: 11, color: "#aaa" }}>📍 SJC, SP</div>
-                <button onClick={() => setShowPrefs(true)} style={{ background: prefs ? "#A78BFA22" : "rgba(0,0,0,0.8)", border: prefs ? "1px solid #A78BFA55" : "1px solid #333", borderRadius: 20, padding: "5px 12px", color: prefs ? "#A78BFA" : "#888", cursor: "pointer", fontSize: 11, fontWeight: 600 }}>
-                  {prefs ? "⚡ On" : "⚡ Filtros"}
-                </button>
+                <div onClick={() => setShowProfile(true)} style={{ width: 34, height: 34, borderRadius: "50%", overflow: "hidden", cursor: "pointer", border: "2px solid #A78BFA44", flexShrink: 0 }}>
+                  {user?.user_metadata?.avatar_url ? (
+                    <img src={user.user_metadata.avatar_url} alt="perfil" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  ) : (
+                    <div style={{ width: "100%", height: "100%", background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <svg viewBox="0 0 24 24" width="20" height="20" fill="none"><circle cx="12" cy="8" r="4" fill="#555"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" fill="#555"/></svg>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
             <div style={{ display: "flex", gap: 6, overflowX: "auto", scrollbarWidth: "none" }}>
@@ -1200,10 +1219,36 @@ export default function App() {
       )}
 
       {tab === "saved" && (
-        <div style={{ flex: 1, overflow: "auto", padding: "20px 16px 100px", textAlign: "center", paddingTop: 80 }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>♡</div>
-          <div style={{ fontSize: 18, fontWeight: 700, color: "#555" }}>Nenhum lugar salvo</div>
-          <div style={{ fontSize: 13, color: "#444", marginTop: 8 }}>Salve seus lugares favoritos para encontrá-los rápido</div>
+        <div style={{ flex: 1, overflow: "auto", padding: "20px 16px 100px" }}>
+          <h2 style={{ margin: "0 0 20px", fontSize: 24, fontWeight: 800, color: "#f5f5f5" }}>Salvos ❤️</h2>
+          <div style={{ marginBottom: 28 }}>
+            <h3 style={{ margin: "0 0 12px", fontSize: 13, color: "#555", fontFamily: "monospace", letterSpacing: "0.08em" }}>LUGARES SALVOS</h3>
+            {favPlaces.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "30px 20px", background: "#111", borderRadius: 16, border: "1px solid #1a1a1a" }}>
+                <div style={{ fontSize: 32, marginBottom: 8 }}>🤍</div>
+                <div style={{ fontSize: 14, color: "#555" }}>Nenhum lugar salvo ainda</div>
+                <div style={{ fontSize: 12, color: "#444", marginTop: 4 }}>Toca o ♡ nos cards para salvar</div>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {favPlaces.map(place => (<PlaceCard key={place.id} place={place} onClick={setSelected} isFav={true} onToggleFav={toggleFavPlace} />))}
+              </div>
+            )}
+          </div>
+          <div>
+            <h3 style={{ margin: "0 0 12px", fontSize: 13, color: "#555", fontFamily: "monospace", letterSpacing: "0.08em" }}>FESTAS SALVAS</h3>
+            {favEvents.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "30px 20px", background: "#111", borderRadius: 16, border: "1px solid #1a1a1a" }}>
+                <div style={{ fontSize: 32, marginBottom: 8 }}>🤍</div>
+                <div style={{ fontSize: 14, color: "#555" }}>Nenhuma festa salva ainda</div>
+                <div style={{ fontSize: 12, color: "#444", marginTop: 4 }}>Toca o ♡ nos cards de festas</div>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                {favEvents.map(event => (<EventCard key={event.id} event={event} onClick={setSelectedEvent} isFav={true} onToggleFav={toggleFavEvent} />))}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -1227,6 +1272,7 @@ export default function App() {
       {selected && <PlaceDetail place={selected} onClose={() => setSelected(null)} />}
       {selectedEvent && <EventDetail event={selectedEvent} onClose={() => setSelectedEvent(null)} />}
       {showPrefs && <PreferencesModal onClose={() => setShowPrefs(false)} onApply={setPrefs} />}
+      {showProfile && <ProfileScreen user={user} onClose={() => setShowProfile(false)} favPlaces={favPlaces} favEvents={favEvents} onLogout={handleLogout} />}
     </div>
   );
 }
