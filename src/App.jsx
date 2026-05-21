@@ -615,6 +615,7 @@ function MapView({ mapPlaces, loadingPlaces, onBoundsChange, onSelectPlace, isAc
     }
     const initMap = () => {
       if (!window.L || !mapRef.current) return;
+      if (mapRef.current._leaflet_id) return;
       const L = window.L;
       const map = L.map(mapRef.current, { center: [-23.1891, -45.8841], zoom: 14, zoomControl: false });
       L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", { attribution: "© OpenStreetMap © CARTO", subdomains: "abcd", maxZoom: 19 }).addTo(map);
@@ -826,12 +827,9 @@ export default function App() {
 
   const fetchPlacesInBounds = useCallback(async (bounds) => {
     setLoadingPlaces(true);
-    try {
-      const { data, error } = await supabase.from("places").select("*").gte("lat", bounds.latMin).lte("lat", bounds.latMax).gte("lng", bounds.lngMin).lte("lng", bounds.lngMax);
-      if (error || !data || data.length === 0) { setMapPlaces(filterLocalPlacesByBounds(bounds)); }
-      else { setMapPlaces(data.map(p => ({ ...p, tags: p.tags || [], reports: p.reports || [] }))); }
-    } catch { setMapPlaces(filterLocalPlacesByBounds(bounds)); }
-    finally { setLoadingPlaces(false); }
+    const localResults = filterLocalPlacesByBounds(bounds);
+    setMapPlaces(localResults.length > 0 ? localResults : PLACES);
+    setLoadingPlaces(false);
   }, [filterLocalPlacesByBounds]);
 
   const filteredMapPlaces = mapPlaces.filter(p => {
@@ -948,7 +946,7 @@ export default function App() {
 
         {/* AO VIVO */}
         {tab === "live" && (
-          <div style={{ padding: "20px 16px 100px", flex: 1, boxSizing: "border-box" }}>
+          <div style={{ padding: "20px 16px 100px", flex: 1, boxSizing: "border-box", minHeight: "100vh" }}>
             <h2 style={{ margin: "0 0 4px", fontSize: 22, fontWeight: 800, color: "#f5f5f5" }}>Ao Vivo 🔴</h2>
             <p style={{ margin: "0 0 20px", fontSize: 13, color: "#555" }}>Updates em tempo real de quem está lá agora</p>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -975,7 +973,7 @@ export default function App() {
 
         {/* SALVOS */}
         {tab === "saved" && (
-          <div style={{ padding: "20px 16px 100px", flex: 1, boxSizing: "border-box" }}>
+          <div style={{ padding: "20px 16px 100px", flex: 1, boxSizing: "border-box", minHeight: "100vh" }}>
             <h2 style={{ margin: "0 0 20px", fontSize: 24, fontWeight: 800, color: "#f5f5f5" }}>Salvos ❤️</h2>
 
             {/* Lugares salvos */}
