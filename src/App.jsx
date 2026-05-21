@@ -10,8 +10,8 @@ const PLACES = [
   { id: 6, name: "FREAKOUT", type: "club", distance: "1.6km", tags: ["rock", "underground", "alternativo"], rating: 3.6, crowd: 88, vibe: "Packed", music: "Rock / Alternativo", cover: "R$25", color: "#F43F5E", lat: -23.1911182, lng: -45.8915233, checkins: 178, address: "R. Luiz Jacinto, 240 - Centro", reports: [{ user: "Thiago P.", avatar: "TP", time: "1min atrás", msg: "Rock pesado rolando agora 🎸 galera doida!", mood: "🔥" }] },
 ];
 
-const VIBES = ["All", "Quiet", "Chill", "Relaxed", "Lively", "Packed"];
-const TYPES = ["All", "bar", "club", "restaurant"];
+const VIBES = ["Tranquilo", "Agitado", "Lotado"];
+const TYPES = ["Todos", "bar", "club", "restaurant"];
 const EVENT_TYPES = ["Todos", "Universitária", "Show", "Eletrônico", "Funk", "Rock"];
 
 const EVENTS = [
@@ -22,7 +22,7 @@ const EVENTS = [
 ];
 
 const crowdColor = (c) => c >= 90 ? "#EF4444" : c >= 65 ? "#F59E0B" : "#22C55E";
-const crowdLabel = (c) => c >= 90 ? "Lotado" : c >= 65 ? "Movimentado" : "Tranquilo";
+const crowdLabel = (c) => c >= 90 ? "Lotado" : c >= 65 ? "Agitado" : "Tranquilo";
 const crowdEmoji = (c) => c >= 90 ? "🔴" : c >= 65 ? "🟡" : "🟢";
 
 // ============================================================
@@ -148,7 +148,7 @@ function PlaceCard({ place, onClick, isFav, onToggleFav }) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 2 }}>
-            <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: place.color + "22", color: place.color, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "monospace" }}>{place.type}</span>
+            <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: place.color + "22", color: place.color, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "monospace" }}>{place.type === "bar" ? "Bar" : place.type === "club" ? "Balada" : place.type === "restaurant" ? "Restaurante" : place.type}</span>
             <span style={{ fontSize: 11, color: "#555" }}>{place.distance}</span>
           </div>
           <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: "#f0f0f0" }}>{place.name}</h3>
@@ -218,7 +218,7 @@ function PlaceDetail({ place, onClose }) {
         <div style={{ padding: "0 20px 16px", borderBottom: "1px solid #1a1a1a" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
             <div>
-              <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 10px", borderRadius: 20, background: place.color + "22", color: place.color, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "monospace" }}>{place.type}</span>
+              <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 10px", borderRadius: 20, background: place.color + "22", color: place.color, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "monospace" }}>{place.type === "bar" ? "Bar" : place.type === "club" ? "Balada" : place.type === "restaurant" ? "Restaurante" : place.type}</span>
               <h2 style={{ margin: "6px 0 2px", fontSize: 22, fontWeight: 800, color: "#f5f5f5" }}>{place.name}</h2>
               <div style={{ color: "#555", fontSize: 12 }}>📍 {place.address}</div>
               <div style={{ color: "#666", fontSize: 13, marginTop: 2 }}>{place.distance} · ⭐ {place.rating} · {place.checkins} check-ins</div>
@@ -228,7 +228,7 @@ function PlaceDetail({ place, onClose }) {
         </div>
         <div style={{ padding: "16px 20px", borderBottom: "1px solid #1a1a1a" }}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
-            {[{ label: "CROWD", val: crowdLabel(place.crowd), sub: `${place.crowd}%`, color: crowdColor(place.crowd) }, { label: "MÚSICA", val: place.music, sub: "ao vivo", color: "#A78BFA" }, { label: "ENTRADA", val: place.cover, sub: "cover", color: "#F59E0B" }].map(item => (
+            {[{ label: "CHEIO", val: crowdLabel(place.crowd), sub: `${place.crowd}%`, color: crowdColor(place.crowd) }, { label: "MÚSICA", val: place.music, sub: "ao vivo", color: "#A78BFA" }, { label: "ENTRADA", val: place.cover, sub: "cover", color: "#F59E0B" }].map(item => (
               <div key={item.label} style={{ background: "#111", borderRadius: 12, padding: "10px 12px", border: `1px solid ${item.color}22` }}>
                 <div style={{ fontSize: 9, color: "#555", marginBottom: 3, fontFamily: "monospace" }}>{item.label}</div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: item.color }}>{item.val}</div>
@@ -301,7 +301,7 @@ function PreferencesModal({ onClose, onApply }) {
         <div style={{ marginBottom: 20 }}>
           <div style={{ fontSize: 11, color: "#555", marginBottom: 10, fontFamily: "monospace" }}>TIPO DE LUGAR</div>
           <div style={{ display: "flex", gap: 8 }}>
-            {TYPES.slice(1).map(t => (<button key={t} onClick={() => toggle(typePrefs, setTypePrefs, t)} style={{ padding: "6px 14px", borderRadius: 20, background: typePrefs.includes(t) ? "#34D39922" : "#111", color: typePrefs.includes(t) ? "#34D399" : "#666", border: typePrefs.includes(t) ? "1px solid #34D39955" : "1px solid #222", cursor: "pointer", fontSize: 13, fontWeight: 600, textTransform: "capitalize" }}>{t}</button>))}
+            {TYPES.slice(1).map(t => (<button key={t} onClick={() => toggle(typePrefs, setTypePrefs, t)} style={{ padding: "6px 14px", borderRadius: 20, background: typePrefs.includes(t) ? "#34D39922" : "#111", color: typePrefs.includes(t) ? "#34D399" : "#666", border: typePrefs.includes(t) ? "1px solid #34D39955" : "1px solid #222", cursor: "pointer", fontSize: 13, fontWeight: 600, textTransform: "capitalize" }}>{t === "bar" ? "Bar" : t === "club" ? "Balada" : t === "restaurant" ? "Restaurante" : t}</button>))}
           </div>
         </div>
         <div style={{ marginBottom: 24 }}>
@@ -444,9 +444,40 @@ function MapView({ mapPlaces, loadingPlaces, onBoundsChange, onSelectPlace, isAc
     mapPlaces.forEach(place => {
       if (!place.lat || !place.lng) return;
       const hue = place.color || "#A78BFA";
+      const typeEmoji = place.type === "bar" ? "🍺" : place.type === "club" ? "🎵" : "🍽️";
       const icon = L.divIcon({
-        html: `<div style="background:${hue};color:#000;border-radius:20px;padding:5px 10px;font-size:11px;font-weight:800;white-space:nowrap;box-shadow:0 2px 12px ${hue}88;border:2px solid rgba(255,255,255,0.2);cursor:pointer;display:flex;align-items:center;gap:4px;">${place.crowd >= 90 ? "🔴" : place.crowd >= 65 ? "🟡" : "🟢"} ${place.name}</div>`,
-        className: "", iconAnchor: [0, 0]
+        html: `<div style="
+          display:flex;
+          flex-direction:column;
+          align-items:center;
+          cursor:pointer;
+        ">
+          <div style="
+            width:38px;
+            height:38px;
+            background:${hue};
+            border-radius:50% 50% 50% 0;
+            transform:rotate(-45deg);
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            box-shadow:0 3px 14px ${hue}99;
+            border:2px solid rgba(255,255,255,0.3);
+          ">
+            <span style="transform:rotate(45deg);font-size:16px;line-height:1">${typeEmoji}</span>
+          </div>
+          <div style="
+            width:6px;
+            height:6px;
+            background:${hue};
+            border-radius:50%;
+            margin-top:1px;
+            opacity:0.5;
+          "></div>
+        </div>`,
+        className: "",
+        iconSize: [38, 48],
+        iconAnchor: [19, 48],
       });
       const marker = L.marker([place.lat, place.lng], { icon }).addTo(leafletMapRef.current).on("click", () => onSelectPlace(place));
       markersRef.current.push(marker);
@@ -522,8 +553,8 @@ export default function App() {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [showPrefs, setShowPrefs] = useState(false);
   const [prefs, setPrefs] = useState(null);
-  const [filterVibe, setFilterVibe] = useState("All");
-  const [filterType, setFilterType] = useState("All");
+  const [filterVibe, setFilterVibe] = useState("");
+  const [filterType, setFilterType] = useState("Todos");
   const [filterEventType, setFilterEventType] = useState("Todos");
   const [search, setSearch] = useState("");
   const [events, setEvents] = useState(EVENTS);
@@ -581,8 +612,8 @@ export default function App() {
   }, [filterLocalPlacesByBounds]);
 
   const filteredMapPlaces = mapPlaces.filter(p => {
-    if (filterVibe !== "All" && p.vibe !== filterVibe) return false;
-    if (filterType !== "All" && p.type !== filterType) return false;
+    if (filterVibe !== "" && p.vibe !== filterVibe) return false;
+    if (filterType !== "Todos" && p.type !== filterType) return false;
     if (search && !p.name.toLowerCase().includes(search.toLowerCase()) && !(p.tags || []).some(t => t.toLowerCase().includes(search.toLowerCase()))) return false;
     if (prefs) {
       if (prefs.vibePrefs.length && !prefs.vibePrefs.includes(p.vibe)) return false;
@@ -636,7 +667,7 @@ export default function App() {
           <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 4, scrollbarWidth: "none" }}>
             {TYPES.map(t => (<button key={t} onClick={() => setFilterType(t)} style={{ flexShrink: 0, padding: "5px 12px", borderRadius: 20, background: filterType === t ? "#f5f5f5" : "#111", color: filterType === t ? "#080808" : "#666", border: filterType === t ? "none" : "1px solid #222", fontSize: 12, fontWeight: 600, cursor: "pointer", textTransform: "capitalize" }}>{t}</button>))}
             <div style={{ width: 1, background: "#222", margin: "0 4px", flexShrink: 0 }} />
-            {VIBES.slice(1).map(v => (<button key={v} onClick={() => setFilterVibe(filterVibe === v ? "All" : v)} style={{ flexShrink: 0, padding: "5px 12px", borderRadius: 20, background: filterVibe === v ? "#A78BFA22" : "transparent", color: filterVibe === v ? "#A78BFA" : "#555", border: filterVibe === v ? "1px solid #A78BFA44" : "1px solid #1a1a1a", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>{v}</button>))}
+            {VIBES.map(v => (<button key={v} onClick={() => setFilterVibe(filterVibe === v ? "" : v)} style={{ flexShrink: 0, padding: "5px 12px", borderRadius: 20, background: filterVibe === v ? "#A78BFA22" : "transparent", color: filterVibe === v ? "#A78BFA" : "#555", border: filterVibe === v ? "1px solid #A78BFA44" : "1px solid #1a1a1a", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>{v}</button>))}
           </div>
         </div>
       )}
@@ -693,7 +724,7 @@ export default function App() {
 
         {/* AO VIVO */}
         {tab === "live" && (
-          <div style={{ padding: "20px 16px 100px" }}>
+          <div style={{ padding: "20px 16px 100px", minHeight: "100%" }}>
             <h2 style={{ margin: "0 0 4px", fontSize: 22, fontWeight: 800, color: "#f5f5f5" }}>Ao Vivo 🔴</h2>
             <p style={{ margin: "0 0 20px", fontSize: 13, color: "#555" }}>Updates em tempo real de quem está lá agora</p>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -720,7 +751,7 @@ export default function App() {
 
         {/* SALVOS */}
         {tab === "saved" && (
-          <div style={{ padding: "20px 16px 100px" }}>
+          <div style={{ padding: "20px 16px 100px", minHeight: "100%" }}>
             <h2 style={{ margin: "0 0 20px", fontSize: 24, fontWeight: 800, color: "#f5f5f5" }}>Salvos ❤️</h2>
 
             {/* Lugares salvos */}
@@ -765,14 +796,12 @@ export default function App() {
             { id: "discover", icon: "🗺", label: "Explorar" },
             { id: "festas", icon: "🎉", label: "Festas" },
             { id: "live", icon: "🔴", label: "Ao Vivo" },
-            { id: "saved", icon: "❤️", label: "Salvos", badge: favPlaces.length + favEvents.length }
+            { id: "saved", icon: "❤️", label: "Salvos" }
           ].map(t => (
             <button key={t.id} onClick={() => setTab(t.id)} style={{ flex: 1, padding: "8px 0", background: tab === t.id ? "#1e1e1e" : "transparent", border: "none", borderRadius: 12, cursor: "pointer", color: tab === t.id ? "#f5f5f5" : "#555", fontSize: 11, fontWeight: 600, position: "relative", zIndex: 400 }}>
               <div style={{ fontSize: 16, marginBottom: 1 }}>{t.icon}</div>
               {t.label}
-              {t.badge > 0 && (
-                <div style={{ position: "absolute", top: 4, right: "50%", transform: "translateX(8px)", background: "#EF4444", borderRadius: "50%", width: 16, height: 16, fontSize: 9, fontWeight: 800, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>{t.badge}</div>
-              )}
+
             </button>
           ))}
         </div>
