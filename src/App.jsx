@@ -220,7 +220,7 @@ function CrowdBar({ value }) {
   return (
     <div style={{ marginTop: 6 }}>
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-        <span style={{ fontSize: 11, color: "#888", fontFamily: "monospace" }}>CROWD</span>
+        <span style={{ fontSize: 11, color: "#888", fontFamily: "monospace" }}>CHEIO</span>
         <span style={{ fontSize: 11, fontWeight: 700, color }}>{crowdEmoji(value)} {value}%</span>
       </div>
       <div style={{ height: 5, borderRadius: 3, background: "#1e1e1e", overflow: "hidden" }}>
@@ -647,12 +647,111 @@ function MapView({ mapPlaces, loadingPlaces, onBoundsChange, onSelectPlace, isAc
   );
 }
 
+
+// ============================================================
+// TELA DE PERFIL
+// ============================================================
+function ProfileScreen({ user, onClose, favPlaces, favEvents, onLogout }) {
+  const name = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split("@")[0] || "Usuário";
+  const email = user?.email || "";
+  const avatar = user?.user_metadata?.avatar_url;
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "#080808", zIndex: 700, display: "flex", flexDirection: "column", fontFamily: "system-ui, -apple-system, sans-serif", overflowY: "auto" }}>
+      
+      {/* Header com gradiente */}
+      <div style={{ background: "linear-gradient(135deg, #A78BFA, #F472B6)", padding: "60px 20px 70px", position: "relative" }}>
+        <button onClick={onClose} style={{ position: "absolute", top: 20, right: 20, background: "rgba(0,0,0,0.3)", border: "none", color: "#fff", width: 36, height: 36, borderRadius: "50%", cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+          {/* Avatar */}
+          <div style={{ width: 80, height: 80, borderRadius: "50%", overflow: "hidden", border: "3px solid #fff", marginBottom: 12 }}>
+            {avatar ? (
+              <img src={avatar} alt="perfil" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            ) : (
+              <div style={{ width: "100%", height: "100%", background: "rgba(0,0,0,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <svg viewBox="0 0 24 24" width="48" height="48" fill="none">
+                  <circle cx="12" cy="8" r="4" fill="rgba(255,255,255,0.9)"/>
+                  <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" fill="rgba(255,255,255,0.9)"/>
+                </svg>
+              </div>
+            )}
+          </div>
+          <div style={{ fontSize: 22, fontWeight: 800, color: "#fff", marginBottom: 4 }}>{name}</div>
+          <div style={{ fontSize: 13, color: "rgba(255,255,255,0.75)" }}>{email}</div>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, padding: "20px 20px 0", marginTop: -30 }}>
+        <div style={{ background: "#111", borderRadius: 16, padding: "16px", border: "1px solid #222", textAlign: "center" }}>
+          <div style={{ fontSize: 28, fontWeight: 900, color: "#A78BFA", marginBottom: 4 }}>{favPlaces.length}</div>
+          <div style={{ fontSize: 12, color: "#666" }}>Lugares salvos</div>
+        </div>
+        <div style={{ background: "#111", borderRadius: 16, padding: "16px", border: "1px solid #222", textAlign: "center" }}>
+          <div style={{ fontSize: 28, fontWeight: 900, color: "#F472B6", marginBottom: 4 }}>{favEvents.length}</div>
+          <div style={{ fontSize: 12, color: "#666" }}>Festas salvas</div>
+        </div>
+      </div>
+
+      {/* Menu */}
+      <div style={{ padding: "20px 20px 100px", display: "flex", flexDirection: "column", gap: 10 }}>
+        <div style={{ fontSize: 11, color: "#444", fontFamily: "monospace", letterSpacing: "0.08em", marginBottom: 4 }}>MINHA CONTA</div>
+
+        <div style={{ background: "#111", borderRadius: 14, border: "1px solid #222", overflow: "hidden" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", borderBottom: "1px solid #1a1a1a" }}>
+            <span style={{ fontSize: 20 }}>❤️</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#f0f0f0" }}>Lugares salvos</div>
+              <div style={{ fontSize: 11, color: "#555" }}>{favPlaces.length} lugares</div>
+            </div>
+            <span style={{ fontSize: 16, color: "#444" }}>›</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px" }}>
+            <span style={{ fontSize: 20 }}>🎉</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#f0f0f0" }}>Festas salvas</div>
+              <div style={{ fontSize: 11, color: "#555" }}>{favEvents.length} festas</div>
+            </div>
+            <span style={{ fontSize: 16, color: "#444" }}>›</span>
+          </div>
+        </div>
+
+        <div style={{ fontSize: 11, color: "#444", fontFamily: "monospace", letterSpacing: "0.08em", marginBottom: 4, marginTop: 8 }}>EM BREVE</div>
+        <div style={{ background: "#111", borderRadius: 14, border: "1px solid #1a1a1a", overflow: "hidden", opacity: 0.5 }}>
+          {[
+            { icon: "🏆", title: "Badges e conquistas", sub: "Desbloqueie recompensas" },
+            { icon: "👥", title: "Amigos", sub: "Veja onde seus amigos estão" },
+            { icon: "📍", title: "Histórico de visitas", sub: "Lugares que você foi" },
+          ].map((item, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", borderBottom: i < 2 ? "1px solid #1a1a1a" : "none" }}>
+              <span style={{ fontSize: 20 }}>{item.icon}</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: "#f0f0f0" }}>{item.title}</div>
+                <div style={{ fontSize: 11, color: "#555" }}>{item.sub}</div>
+              </div>
+              <span style={{ fontSize: 10, background: "#222", color: "#555", padding: "2px 8px", borderRadius: 20 }}>em breve</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Logout */}
+        <button onClick={onLogout} style={{ marginTop: 8, padding: 16, background: "#1a0a0a", border: "1px solid #EF444433", borderRadius: 14, color: "#EF4444", fontSize: 14, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+          🚪 Sair da conta
+        </button>
+
+        <div style={{ textAlign: "center", fontSize: 11, color: "#333", marginTop: 8 }}>vybe. v1.0 · São José dos Campos</div>
+      </div>
+    </div>
+  );
+}
+
 // ============================================================
 // APP PRINCIPAL
 // ============================================================
 export default function App() {
   const [user, setUser] = useState(undefined); // undefined = carregando, null = sem login
-  const [guest, setGuest] = useState(false); // true = explorar sem conta
+  const [guest, setGuest] = useState(false);
+  const [showProfile, setShowProfile] = useState(false); // true = explorar sem conta
   const [showProfile, setShowProfile] = useState(false);
   const [tab, setTab] = useState("discover");
   const [selected, setSelected] = useState(null);
@@ -680,6 +779,15 @@ export default function App() {
   // Favoritos
   const [favPlaces, setFavPlaces] = useState([]);
   const [favEvents, setFavEvents] = useState([]);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    setGuest(false);
+    setShowProfile(false);
+    setFavPlaces([]);
+    setFavEvents([]);
+  };
 
   const toggleFavPlace = (place) => {
     setFavPlaces(prev => prev.some(p => p.id === place.id) ? prev.filter(p => p.id !== place.id) : [...prev, place]);
@@ -818,7 +926,7 @@ export default function App() {
 
         {/* FESTAS */}
         {tab === "festas" && (
-          <div style={{ padding: "0 16px 100px" }}>
+          <div style={{ padding: "0 16px 100px", flex: 1, boxSizing: "border-box" }}>
             <div style={{ padding: "20px 0 12px" }}>
               <h2 style={{ margin: "0 0 2px", fontSize: 24, fontWeight: 800, color: "#f5f5f5" }}>Festas & Shows 🎉</h2>
               <p style={{ margin: "0 0 14px", fontSize: 13, color: "#555" }}>Eventos próximos em São José dos Campos</p>
@@ -840,7 +948,7 @@ export default function App() {
 
         {/* AO VIVO */}
         {tab === "live" && (
-          <div style={{ padding: "20px 16px 100px", minHeight: "100%" }}>
+          <div style={{ padding: "20px 16px 100px", flex: 1, boxSizing: "border-box" }}>
             <h2 style={{ margin: "0 0 4px", fontSize: 22, fontWeight: 800, color: "#f5f5f5" }}>Ao Vivo 🔴</h2>
             <p style={{ margin: "0 0 20px", fontSize: 13, color: "#555" }}>Updates em tempo real de quem está lá agora</p>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -867,7 +975,7 @@ export default function App() {
 
         {/* SALVOS */}
         {tab === "saved" && (
-          <div style={{ padding: "20px 16px 100px", minHeight: "100%" }}>
+          <div style={{ padding: "20px 16px 100px", flex: 1, boxSizing: "border-box" }}>
             <h2 style={{ margin: "0 0 20px", fontSize: 24, fontWeight: 800, color: "#f5f5f5" }}>Salvos ❤️</h2>
 
             {/* Lugares salvos */}
@@ -924,6 +1032,7 @@ export default function App() {
       </div>
 
       {selected && <PlaceDetail place={selected} onClose={() => setSelected(null)} />}
+      {showProfile && <ProfileScreen user={user} onClose={() => setShowProfile(false)} favPlaces={favPlaces} favEvents={favEvents} onLogout={handleLogout} />}
       {selectedEvent && <EventDetail event={selectedEvent} onClose={() => setSelectedEvent(null)} />}
       {showPrefs && <PreferencesModal onClose={() => setShowPrefs(false)} onApply={setPrefs} />}
       {showProfile && user && <ProfileScreen user={user} favPlaces={favPlaces} favEvents={favEvents} onClose={() => setShowProfile(false)} onLogout={handleLogout} />}
