@@ -874,7 +874,7 @@ function HomeMapView({ places, onSelectPlace, onAreaChange }) {
     };
   }, []);
 
-  return <div ref={mapRef} style={{ height: "100%", width: "100%" }} />;
+  return <div ref={mapRef} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />;
 }
 
 
@@ -1099,11 +1099,11 @@ export default function App() {
   }
 
   return (
-    <div style={{ height: "100vh", background: "#080808", color: "#f5f5f5", maxWidth: 480, margin: "0 auto", position: "relative", fontFamily: "system-ui, -apple-system, sans-serif", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+    <div style={{ height: "100vh", background: "#080808", color: "#f5f5f5", maxWidth: 480, margin: "0 auto", position: "relative", fontFamily: "system-ui, -apple-system, sans-serif", display: "flex", flexDirection: "column", overflow: "hidden", isolation: "isolate" }}>
 
       {/* HOME — Mapa como tela principal estilo Airbnb */}
       {tab === "home" && (
-        <div style={{ flex: 1, position: "relative" }}>
+        <div style={{ flex: 1, position: "relative", minHeight: 0, overflow: "hidden" }}>
 
           {/* Mapa ocupa todo o fundo */}
           <div style={{ position: "absolute", inset: 0, zIndex: 1 }}>
