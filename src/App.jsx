@@ -1,84 +1,13 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "./supabase";
 
 const PLACES = [
-  {
-    id: 1, name: "Bar Coronel", type: "bar", distance: "0.3km",
-    tags: ["petiscos", "chopp", "tradicional"], rating: 4.7, crowd: 80,
-    vibe: "Lively", music: "Sertanejo", cover: "Grátis",
-    color: "#FF6B6B",
-    lat: -23.1825311, lng: -45.8833651,
-    checkins: 34,
-    address: "R. Francisco Raphael, 298 - Centro",
-    reports: [
-      { user: "Ana M.", avatar: "AM", time: "5min atrás", msg: "Chopp gelado e petiscos incríveis hoje! Tá cheio mas vale!", mood: "🔥" },
-      { user: "Rafa S.", avatar: "RS", time: "12min atrás", msg: "Sem fila ainda, aproveita!", mood: "✨" },
-    ]
-  },
-  {
-    id: 2, name: "Honey Club", type: "club", distance: "1.4km",
-    tags: ["eletrônico", "shows", "18+"], rating: 4.1, crowd: 92,
-    vibe: "Packed", music: "House / Pop", cover: "R$40",
-    color: "#A78BFA",
-    lat: -23.193503999999997, lng: -45.890727299999995,
-    checkins: 112,
-    address: "Av. Dr. Ademar de Barros, 152 - Vila Adyana",
-    reports: [
-      { user: "Bia T.", avatar: "BT", time: "2min atrás", msg: "DJ está arrasando agora 🎧 pista lotada!", mood: "🔥" },
-      { user: "Leo R.", avatar: "LR", time: "8min atrás", msg: "Fila ~20min. Dentro tá ótimo!", mood: "⚡" },
-      { user: "Julia C.", avatar: "JC", time: "20min atrás", msg: "Melhor noite aqui em meses, estão tocando muito", mood: "🔥" },
-    ]
-  },
-  {
-    id: 3, name: "Buteco da Villa", type: "bar", distance: "2.1km",
-    tags: ["boteco", "torresmo", "zona leste"], rating: 4.7, crowd: 58,
-    vibe: "Relaxed", music: "Pagode / Samba", cover: "Grátis",
-    color: "#34D399",
-    lat: -23.174844399999998, lng: -45.8541844,
-    checkins: 67,
-    address: "Av. Prof. S. P. T. Pontes, 875 - Vila Industrial",
-    reports: [
-      { user: "Pedro A.", avatar: "PA", time: "15min atrás", msg: "Mesa na calçada disponível, clima perfeito essa noite 🌙", mood: "✨" },
-    ]
-  },
-  {
-    id: 4, name: "Buxixo Gastrobar", type: "restaurant", distance: "1.8km",
-    tags: ["gastronomia", "cocktails", "vista"], rating: 4.6, crowd: 65,
-    vibe: "Chill", music: "Deep House", cover: "Grátis",
-    color: "#F59E0B",
-    lat: -23.1954347, lng: -45.908351499999995,
-    checkins: 89,
-    address: "Av. Anchieta, 1580 - Jardim Esplanada",
-    reports: [
-      { user: "Mari F.", avatar: "MF", time: "3min atrás", msg: "Vista incrível hoje, vibes perfeitas 🏙️", mood: "✨" },
-      { user: "Caio B.", avatar: "CB", time: "30min atrás", msg: "Ainda não tá lotado, corre pegar lugar!", mood: "⚡" },
-    ]
-  },
-  {
-    id: 5, name: "Hangar Gastronomia", type: "restaurant", distance: "2.0km",
-    tags: ["temático", "aviação", "família"], rating: 4.8, crowd: 45,
-    vibe: "Relaxed", music: "MPB", cover: "Grátis",
-    color: "#60A5FA",
-    lat: -23.197353099999997, lng: -45.90464610000001,
-    checkins: 41,
-    address: "Av. Barão do Rio Branco, 669 - Jd. Esplanada",
-    reports: [
-      { user: "Dani W.", avatar: "DW", time: "45min atrás", msg: "Tema de avião incrível, comida ótima. Ótimo pra conversar.", mood: "✨" },
-    ]
-  },
-  {
-    id: 6, name: "FREAKOUT", type: "club", distance: "1.6km",
-    tags: ["rock", "underground", "alternativo"], rating: 3.6, crowd: 88,
-    vibe: "Packed", music: "Rock / Alternativo", cover: "R$25",
-    color: "#F43F5E",
-    lat: -23.1911182, lng: -45.8915233,
-    checkins: 178,
-    address: "R. Luiz Jacinto, 240 - Centro",
-    reports: [
-      { user: "Thiago P.", avatar: "TP", time: "1min atrás", msg: "Rock pesado rolando agora 🎸 galera doida!", mood: "🔥" },
-      { user: "Flávia N.", avatar: "FN", time: "7min atrás", msg: "Fila tá grande mas tô dentro, valeu a espera!", mood: "⚡" },
-    ]
-  },
+  { id: 1, name: "Bar Coronel", type: "bar", distance: "0.3km", tags: ["petiscos", "chopp", "tradicional"], rating: 4.7, crowd: 80, vibe: "Lively", music: "Sertanejo", cover: "Grátis", color: "#FF6B6B", lat: -23.1825311, lng: -45.8833651, checkins: 34, address: "R. Francisco Raphael, 298 - Centro", reports: [{ user: "Ana M.", avatar: "AM", time: "5min atrás", msg: "Chopp gelado e petiscos incríveis hoje! Tá cheio mas vale!", mood: "🔥" }, { user: "Rafa S.", avatar: "RS", time: "12min atrás", msg: "Sem fila ainda, aproveita!", mood: "✨" }] },
+  { id: 2, name: "Honey Club", type: "club", distance: "1.4km", tags: ["eletrônico", "shows", "18+"], rating: 4.1, crowd: 92, vibe: "Packed", music: "House / Pop", cover: "R$40", color: "#A78BFA", lat: -23.193503999999997, lng: -45.890727299999995, checkins: 112, address: "Av. Dr. Ademar de Barros, 152 - Vila Adyana", reports: [{ user: "Bia T.", avatar: "BT", time: "2min atrás", msg: "DJ está arrasando agora 🎧 pista lotada!", mood: "🔥" }, { user: "Leo R.", avatar: "LR", time: "8min atrás", msg: "Fila ~20min. Dentro tá ótimo!", mood: "⚡" }] },
+  { id: 3, name: "Buteco da Villa", type: "bar", distance: "2.1km", tags: ["boteco", "torresmo", "zona leste"], rating: 4.7, crowd: 58, vibe: "Relaxed", music: "Pagode / Samba", cover: "Grátis", color: "#34D399", lat: -23.174844399999998, lng: -45.8541844, checkins: 67, address: "Av. Prof. S. P. T. Pontes, 875 - Vila Industrial", reports: [{ user: "Pedro A.", avatar: "PA", time: "15min atrás", msg: "Mesa na calçada disponível, clima perfeito essa noite 🌙", mood: "✨" }] },
+  { id: 4, name: "Buxixo Gastrobar", type: "restaurant", distance: "1.8km", tags: ["gastronomia", "cocktails", "vista"], rating: 4.6, crowd: 65, vibe: "Chill", music: "Deep House", cover: "Grátis", color: "#F59E0B", lat: -23.1954347, lng: -45.908351499999995, checkins: 89, address: "Av. Anchieta, 1580 - Jardim Esplanada", reports: [{ user: "Mari F.", avatar: "MF", time: "3min atrás", msg: "Vista incrível hoje, vibes perfeitas 🏙️", mood: "✨" }] },
+  { id: 5, name: "Hangar Gastronomia", type: "restaurant", distance: "2.0km", tags: ["temático", "aviação", "família"], rating: 4.8, crowd: 45, vibe: "Relaxed", music: "MPB", cover: "Grátis", color: "#60A5FA", lat: -23.197353099999997, lng: -45.90464610000001, checkins: 41, address: "Av. Barão do Rio Branco, 669 - Jd. Esplanada", reports: [{ user: "Dani W.", avatar: "DW", time: "45min atrás", msg: "Tema de avião incrível, comida ótima.", mood: "✨" }] },
+  { id: 6, name: "FREAKOUT", type: "club", distance: "1.6km", tags: ["rock", "underground", "alternativo"], rating: 3.6, crowd: 88, vibe: "Packed", music: "Rock / Alternativo", cover: "R$25", color: "#F43F5E", lat: -23.1911182, lng: -45.8915233, checkins: 178, address: "R. Luiz Jacinto, 240 - Centro", reports: [{ user: "Thiago P.", avatar: "TP", time: "1min atrás", msg: "Rock pesado rolando agora 🎸 galera doida!", mood: "🔥" }] },
 ];
 
 const VIBES = ["All", "Quiet", "Chill", "Relaxed", "Lively", "Packed"];
@@ -86,104 +15,101 @@ const TYPES = ["All", "bar", "club", "restaurant"];
 const EVENT_TYPES = ["Todos", "Universitária", "Show", "Eletrônico", "Funk", "Rock"];
 
 const EVENTS = [
-  {
-    id: 1,
-    name: "BATUKADA UNIVERSITÁRIA",
-    type: "Universitária",
-    date: "Sáb, 24 Mai",
-    time: "23:00",
-    location: "UNIVAP — Av. Shishima Hifumi, 2911",
-    description: "A maior festa universitária de SJC está de volta! DJs convidados, open bar por 2h e muito agito. Não perde!",
-    lineup: ["DJ Marquinhos", "DJ Letícia Lima", "MC Paulinho"],
-    confirmed: 312,
-    color: "#F472B6",
-    gradient: "linear-gradient(135deg, #F472B6, #A78BFA)",
-    tickets: [
-      { lote: "1° Lote", price: "R$25", available: true },
-      { lote: "2° Lote", price: "R$35", available: true },
-      { lote: "Na porta", price: "R$50", available: true },
-    ],
-    ticketLink: "https://sympla.com.br",
-    emoji: "🎓",
-  },
-  {
-    id: 2,
-    name: "HONEY CLUB PRESENTS: OVERLOAD",
-    type: "Eletrônico",
-    date: "Sex, 23 Mai",
-    time: "00:00",
-    location: "Honey Club — Av. Dr. Ademar de Barros, 152",
-    description: "Uma noite de house music com os melhores DJs do circuito paulista. Pista quente, luz estroboscópica e muito bass.",
-    lineup: ["DJ Snake Jr.", "Valentina Cruz", "KVSH"],
-    confirmed: 489,
-    color: "#A78BFA",
-    gradient: "linear-gradient(135deg, #A78BFA, #60A5FA)",
-    tickets: [
-      { lote: "1° Lote", price: "R$40", available: false },
-      { lote: "2° Lote", price: "R$55", available: true },
-      { lote: "VIP", price: "R$120", available: true },
-    ],
-    ticketLink: "https://sympla.com.br",
-    emoji: "🎧",
-  },
-  {
-    id: 3,
-    name: "BAILE DO VALE",
-    type: "Funk",
-    date: "Dom, 25 Mai",
-    time: "22:00",
-    location: "Arena Vale — R. dos Expedicionários, 500",
-    description: "O baile que tomou conta do Vale! Funk, pagode e muito suingue. Entrada feminina com desconto até meia noite.",
-    lineup: ["MC Davi", "MC Livinho", "DJ Batutinha"],
-    confirmed: 728,
-    color: "#34D399",
-    gradient: "linear-gradient(135deg, #34D399, #F59E0B)",
-    tickets: [
-      { lote: "Feminino", price: "R$15", available: true },
-      { lote: "Masculino", price: "R$30", available: true },
-      { lote: "Casal", price: "R$40", available: true },
-    ],
-    ticketLink: "https://sympla.com.br",
-    emoji: "🎤",
-  },
-  {
-    id: 4,
-    name: "FREAKOUT FEST",
-    type: "Rock",
-    date: "Sáb, 31 Mai",
-    time: "21:00",
-    location: "FREAKOUT — R. Luiz Jacinto, 240",
-    description: "Festival de rock alternativo com 3 bandas ao vivo, praça de alimentação e muito headbanging. A noite mais pesada do ano!",
-    lineup: ["Scalene", "Lagum", "Los Hermanos Cover"],
-    confirmed: 215,
-    color: "#F43F5E",
-    gradient: "linear-gradient(135deg, #F43F5E, #F59E0B)",
-    tickets: [
-      { lote: "1° Lote", price: "R$35", available: true },
-      { lote: "2° Lote", price: "R$45", available: true },
-      { lote: "Na porta", price: "R$60", available: true },
-    ],
-    ticketLink: "https://sympla.com.br",
-    emoji: "🎸",
-  },
+  { id: 1, name: "BATUKADA UNIVERSITÁRIA", type: "Universitária", date: "Sáb, 24 Mai", time: "23:00", location: "UNIVAP — Av. Shishima Hifumi, 2911", description: "A maior festa universitária de SJC está de volta! DJs convidados, open bar por 2h e muito agito. Não perde!", lineup: ["DJ Marquinhos", "DJ Letícia Lima", "MC Paulinho"], color: "#F472B6", gradient: "linear-gradient(135deg, #F472B6, #A78BFA)", tickets: [{ lote: "1° Lote", price: "R$25", available: true }, { lote: "2° Lote", price: "R$35", available: true }], ticketLink: "https://sympla.com.br", emoji: "🎓" },
+  { id: 2, name: "HONEY CLUB PRESENTS: OVERLOAD", type: "Eletrônico", date: "Sex, 23 Mai", time: "00:00", location: "Honey Club — Av. Dr. Ademar de Barros, 152", description: "Uma noite de house music com os melhores DJs do circuito paulista.", lineup: ["DJ Snake Jr.", "Valentina Cruz", "KVSH"], color: "#A78BFA", gradient: "linear-gradient(135deg, #A78BFA, #60A5FA)", tickets: [{ lote: "2° Lote", price: "R$55", available: true }, { lote: "VIP", price: "R$120", available: true }], ticketLink: "https://sympla.com.br", emoji: "🎧" },
+  { id: 3, name: "BAILE DO VALE", type: "Funk", date: "Dom, 25 Mai", time: "22:00", location: "Arena Vale — R. dos Expedicionários, 500", description: "O baile que tomou conta do Vale! Funk, pagode e muito suingue.", lineup: ["MC Davi", "MC Livinho", "DJ Batutinha"], color: "#34D399", gradient: "linear-gradient(135deg, #34D399, #F59E0B)", tickets: [{ lote: "Feminino", price: "R$15", available: true }, { lote: "Masculino", price: "R$30", available: true }], ticketLink: "https://sympla.com.br", emoji: "🎤" },
+  { id: 4, name: "FREAKOUT FEST", type: "Rock", date: "Sáb, 31 Mai", time: "21:00", location: "FREAKOUT — R. Luiz Jacinto, 240", description: "Festival de rock alternativo com 3 bandas ao vivo.", lineup: ["Scalene", "Lagum", "Los Hermanos Cover"], color: "#F43F5E", gradient: "linear-gradient(135deg, #F43F5E, #F59E0B)", tickets: [{ lote: "1° Lote", price: "R$35", available: true }, { lote: "2° Lote", price: "R$45", available: true }], ticketLink: "https://sympla.com.br", emoji: "🎸" },
 ];
 
 const crowdColor = (c) => c >= 90 ? "#EF4444" : c >= 65 ? "#F59E0B" : "#22C55E";
 const crowdLabel = (c) => c >= 90 ? "Lotado" : c >= 65 ? "Movimentado" : "Tranquilo";
 const crowdEmoji = (c) => c >= 90 ? "🔴" : c >= 65 ? "🟡" : "🟢";
 
-function Avatar({ initials, color }) {
+// ============================================================
+// TELA DE LOGIN
+// ============================================================
+function LoginScreen({ onLogin }) {
+  const [loading, setLoading] = useState(false);
+
+  const handleGoogle = async () => {
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: window.location.origin }
+    });
+    if (error) {
+      alert("Erro ao entrar com Google: " + error.message);
+      setLoading(false);
+    }
+  };
+
   return (
-    <div style={{
-      width: 34, height: 34, borderRadius: "50%",
-      background: color + "22", color,
-      display: "flex", alignItems: "center", justifyContent: "center",
-      fontSize: 11, fontWeight: 700, flexShrink: 0,
-      border: `1.5px solid ${color}44`
-    }}>{initials}</div>
+    <div style={{ height: "100vh", background: "#080808", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 28px", fontFamily: "system-ui, -apple-system, sans-serif", position: "relative", overflow: "hidden" }}>
+      {/* Background blur circles */}
+      <div style={{ position: "absolute", top: "10%", left: "20%", width: 200, height: 200, borderRadius: "50%", background: "#A78BFA", opacity: 0.08, filter: "blur(60px)", pointerEvents: "none" }} />
+      <div style={{ position: "absolute", bottom: "20%", right: "10%", width: 250, height: 250, borderRadius: "50%", background: "#F472B6", opacity: 0.08, filter: "blur(80px)", pointerEvents: "none" }} />
+      <div style={{ position: "absolute", top: "40%", right: "30%", width: 150, height: 150, borderRadius: "50%", background: "#FF6B6B", opacity: 0.06, filter: "blur(50px)", pointerEvents: "none" }} />
+
+      {/* Logo */}
+      <div style={{ textAlign: "center", marginBottom: 48 }}>
+        <h1 style={{ margin: "0 0 8px", fontSize: 56, fontWeight: 900, background: "linear-gradient(90deg, #A78BFA, #F472B6, #FF6B6B)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", letterSpacing: "-2px" }}>vybe.</h1>
+        <p style={{ margin: 0, fontSize: 15, color: "#666", fontWeight: 500 }}>Descubra o que tá rolando perto de você</p>
+      </div>
+
+      {/* Botões de login */}
+      <div style={{ width: "100%", maxWidth: 340, display: "flex", flexDirection: "column", gap: 12 }}>
+
+        {/* Google */}
+        <button onClick={handleGoogle} disabled={loading} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, padding: "14px 20px", background: "#fff", border: "none", borderRadius: 14, cursor: loading ? "not-allowed" : "pointer", fontSize: 15, fontWeight: 700, color: "#111", opacity: loading ? 0.7 : 1, transition: "opacity 0.2s, transform 0.15s" }}
+          onMouseEnter={e => e.currentTarget.style.transform = "translateY(-1px)"}
+          onMouseLeave={e => e.currentTarget.style.transform = ""}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+          {loading ? "Entrando..." : "Continuar com Google"}
+        </button>
+
+        {/* Instagram — em breve */}
+        <button disabled style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, padding: "14px 20px", background: "linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045)", border: "none", borderRadius: 14, cursor: "not-allowed", fontSize: 15, fontWeight: 700, color: "#fff", opacity: 0.4 }}>
+          <span style={{ fontSize: 20 }}>📸</span>
+          Continuar com Instagram
+          <span style={{ fontSize: 10, background: "rgba(255,255,255,0.2)", padding: "2px 7px", borderRadius: 20 }}>em breve</span>
+        </button>
+
+        {/* Apple — em breve */}
+        <button disabled style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, padding: "14px 20px", background: "#111", border: "1px solid #333", borderRadius: 14, cursor: "not-allowed", fontSize: 15, fontWeight: 700, color: "#fff", opacity: 0.4 }}>
+          <span style={{ fontSize: 20 }}>🍎</span>
+          Continuar com Apple
+          <span style={{ fontSize: 10, background: "rgba(255,255,255,0.1)", padding: "2px 7px", borderRadius: 20 }}>em breve</span>
+        </button>
+
+        {/* Explorar sem conta */}
+        <button onClick={() => onLogin(null)} style={{ marginTop: 8, padding: "12px 20px", background: "transparent", border: "1px solid #222", borderRadius: 14, cursor: "pointer", fontSize: 14, fontWeight: 600, color: "#666", transition: "color 0.2s, border-color 0.2s" }}
+          onMouseEnter={e => { e.currentTarget.style.color = "#aaa"; e.currentTarget.style.borderColor = "#444"; }}
+          onMouseLeave={e => { e.currentTarget.style.color = "#666"; e.currentTarget.style.borderColor = "#222"; }}
+        >
+          Explorar sem conta →
+        </button>
+      </div>
+
+      <p style={{ position: "absolute", bottom: 32, fontSize: 11, color: "#333", textAlign: "center" }}>
+        Ao entrar você concorda com os Termos de Uso
+      </p>
+    </div>
   );
 }
 
+// ============================================================
+// AVATAR
+// ============================================================
+function Avatar({ initials, color }) {
+  return (
+    <div style={{ width: 34, height: 34, borderRadius: "50%", background: color + "22", color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, flexShrink: 0, border: `1.5px solid ${color}44` }}>{initials}</div>
+  );
+}
+
+// ============================================================
+// CROWDBAR
+// ============================================================
 function CrowdBar({ value }) {
   const color = crowdColor(value);
   return (
@@ -193,56 +119,55 @@ function CrowdBar({ value }) {
         <span style={{ fontSize: 11, fontWeight: 700, color }}>{crowdEmoji(value)} {value}%</span>
       </div>
       <div style={{ height: 5, borderRadius: 3, background: "#1e1e1e", overflow: "hidden" }}>
-        <div style={{
-          height: "100%", width: `${value}%`, borderRadius: 3,
-          background: `linear-gradient(90deg, ${color}99, ${color})`,
-          transition: "width 0.6s ease"
-        }} />
+        <div style={{ height: "100%", width: `${value}%`, borderRadius: 3, background: `linear-gradient(90deg, ${color}99, ${color})`, transition: "width 0.6s ease" }} />
       </div>
     </div>
   );
 }
 
-function PlaceCard({ place, onClick }) {
+// ============================================================
+// PLACE CARD (com favorito)
+// ============================================================
+function PlaceCard({ place, onClick, isFav, onToggleFav }) {
+  const [animating, setAnimating] = useState(false);
+
+  const handleFav = (e) => {
+    e.stopPropagation();
+    setAnimating(true);
+    setTimeout(() => setAnimating(false), 400);
+    onToggleFav(place);
+  };
+
   return (
-    <div onClick={() => onClick(place)} style={{
-      background: "#111", border: "1px solid #222", borderRadius: 16,
-      padding: 16, cursor: "pointer", transition: "transform 0.15s, border-color 0.15s",
-      position: "relative", overflow: "hidden",
-    }}
+    <div onClick={() => onClick(place)} style={{ background: "#111", border: "1px solid #222", borderRadius: 16, padding: 16, cursor: "pointer", transition: "transform 0.15s, border-color 0.15s", position: "relative", overflow: "hidden" }}
       onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.borderColor = place.color + "88"; }}
       onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.borderColor = "#222"; }}
     >
-      <div style={{
-        position: "absolute", top: 0, right: 0, width: 80, height: 80,
-        background: `radial-gradient(circle at top right, ${place.color}18, transparent 70%)`,
-        pointerEvents: "none"
-      }} />
+      <div style={{ position: "absolute", top: 0, right: 0, width: 80, height: 80, background: `radial-gradient(circle at top right, ${place.color}18, transparent 70%)`, pointerEvents: "none" }} />
+
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 2 }}>
-            <span style={{
-              fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20,
-              background: place.color + "22", color: place.color,
-              textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "monospace"
-            }}>{place.type}</span>
+            <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: place.color + "22", color: place.color, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "monospace" }}>{place.type}</span>
             <span style={{ fontSize: 11, color: "#555" }}>{place.distance}</span>
           </div>
           <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: "#f0f0f0" }}>{place.name}</h3>
         </div>
-        <div style={{ textAlign: "right", flexShrink: 0, marginLeft: 8 }}>
-          <div style={{ fontSize: 15, fontWeight: 700, color: "#f0f0f0" }}>⭐ {place.rating}</div>
-          <div style={{ fontSize: 11, color: "#555" }}>{place.checkins} aqui</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0, marginLeft: 8 }}>
+          <button onClick={handleFav} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 20, transform: animating ? "scale(1.4)" : "scale(1)", transition: "transform 0.2s", padding: 0, lineHeight: 1 }}>
+            {isFav ? "❤️" : "🤍"}
+          </button>
+          <div style={{ textAlign: "right" }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: "#f0f0f0" }}>⭐ {place.rating}</div>
+            <div style={{ fontSize: 11, color: "#555" }}>{place.checkins} aqui</div>
+          </div>
         </div>
       </div>
+
       <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 10 }}>
-        {place.tags.map(t => (
-          <span key={t} style={{
-            fontSize: 11, padding: "2px 8px", borderRadius: 20,
-            background: "#1a1a1a", color: "#888", border: "1px solid #2a2a2a"
-          }}>{t}</span>
-        ))}
+        {(place.tags || []).map(t => (<span key={t} style={{ fontSize: 11, padding: "2px 8px", borderRadius: 20, background: "#1a1a1a", color: "#888", border: "1px solid #2a2a2a" }}>{t}</span>))}
       </div>
+
       <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
         <div style={{ flex: 1, background: "#1a1a1a", borderRadius: 10, padding: "8px 10px" }}>
           <div style={{ fontSize: 10, color: "#555", marginBottom: 2, fontFamily: "monospace" }}>MÚSICA</div>
@@ -253,18 +178,14 @@ function PlaceCard({ place, onClick }) {
           <div style={{ fontSize: 12, color: "#ccc", fontWeight: 600 }}>🎟 {place.cover}</div>
         </div>
       </div>
+
       <CrowdBar value={place.crowd} />
-      {place.reports[0] && (
-        <div style={{
-          marginTop: 10, padding: "8px 10px",
-          background: "#161616", borderRadius: 10,
-          borderLeft: `3px solid ${place.color}66`
-        }}>
+
+      {(place.reports || [])[0] && (
+        <div style={{ marginTop: 10, padding: "8px 10px", background: "#161616", borderRadius: 10, borderLeft: `3px solid ${place.color}66` }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <span style={{ fontSize: 14 }}>{place.reports[0].mood}</span>
-            <span style={{ fontSize: 12, color: "#aaa", fontStyle: "italic", lineHeight: 1.3 }}>
-              "{place.reports[0].msg.length > 60 ? place.reports[0].msg.slice(0, 57) + "…" : place.reports[0].msg}"
-            </span>
+            <span style={{ fontSize: 12, color: "#aaa", fontStyle: "italic", lineHeight: 1.3 }}>"{place.reports[0].msg.length > 60 ? place.reports[0].msg.slice(0, 57) + "…" : place.reports[0].msg}"</span>
           </div>
           <div style={{ fontSize: 10, color: "#555", marginTop: 3 }}>— {place.reports[0].user} · {place.reports[0].time}</div>
         </div>
@@ -273,10 +194,13 @@ function PlaceCard({ place, onClick }) {
   );
 }
 
+// ============================================================
+// PLACE DETAIL
+// ============================================================
 function PlaceDetail({ place, onClose }) {
   const [newReport, setNewReport] = useState("");
   const [newMood, setNewMood] = useState("🔥");
-  const [reports, setReports] = useState(place.reports);
+  const [reports, setReports] = useState(place.reports || []);
   const [sent, setSent] = useState(false);
 
   const submit = () => {
@@ -288,48 +212,24 @@ function PlaceDetail({ place, onClose }) {
   };
 
   return (
-    <div style={{
-      position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)",
-      zIndex: 500, display: "flex", alignItems: "flex-end",
-      backdropFilter: "blur(4px)"
-    }} onClick={onClose}>
-      <div onClick={e => e.stopPropagation()} style={{
-        width: "100%", maxWidth: 480, margin: "0 auto",
-        background: "#0d0d0d", borderRadius: "24px 24px 0 0",
-        border: `1px solid ${place.color}44`,
-        maxHeight: "90vh", overflowY: "auto", padding: "0 0 32px",
-      }}>
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 500, display: "flex", alignItems: "flex-end", backdropFilter: "blur(4px)" }} onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 480, margin: "0 auto", background: "#0d0d0d", borderRadius: "24px 24px 0 0", border: `1px solid ${place.color}44`, maxHeight: "90vh", overflowY: "auto", padding: "0 0 32px" }}>
         <div style={{ height: 4, width: 40, background: "#333", borderRadius: 2, margin: "14px auto 20px" }} />
         <div style={{ padding: "0 20px 16px", borderBottom: "1px solid #1a1a1a" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
             <div>
-              <span style={{
-                fontSize: 11, fontWeight: 700, padding: "2px 10px", borderRadius: 20,
-                background: place.color + "22", color: place.color,
-                textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "monospace"
-              }}>{place.type}</span>
+              <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 10px", borderRadius: 20, background: place.color + "22", color: place.color, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "monospace" }}>{place.type}</span>
               <h2 style={{ margin: "6px 0 2px", fontSize: 22, fontWeight: 800, color: "#f5f5f5" }}>{place.name}</h2>
               <div style={{ color: "#555", fontSize: 12 }}>📍 {place.address}</div>
               <div style={{ color: "#666", fontSize: 13, marginTop: 2 }}>{place.distance} · ⭐ {place.rating} · {place.checkins} check-ins</div>
             </div>
-            <button onClick={onClose} style={{
-              background: "#1a1a1a", border: "none", color: "#888",
-              width: 32, height: 32, borderRadius: "50%", cursor: "pointer",
-              fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center"
-            }}>✕</button>
+            <button onClick={onClose} style={{ background: "#1a1a1a", border: "none", color: "#888", width: 32, height: 32, borderRadius: "50%", cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
           </div>
         </div>
         <div style={{ padding: "16px 20px", borderBottom: "1px solid #1a1a1a" }}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
-            {[
-              { label: "CROWD", val: crowdLabel(place.crowd), sub: `${place.crowd}%`, color: crowdColor(place.crowd) },
-              { label: "MÚSICA", val: place.music, sub: "ao vivo", color: "#A78BFA" },
-              { label: "ENTRADA", val: place.cover, sub: "cover", color: "#F59E0B" }
-            ].map(item => (
-              <div key={item.label} style={{
-                background: "#111", borderRadius: 12, padding: "10px 12px",
-                border: `1px solid ${item.color}22`
-              }}>
+            {[{ label: "CROWD", val: crowdLabel(place.crowd), sub: `${place.crowd}%`, color: crowdColor(place.crowd) }, { label: "MÚSICA", val: place.music, sub: "ao vivo", color: "#A78BFA" }, { label: "ENTRADA", val: place.cover, sub: "cover", color: "#F59E0B" }].map(item => (
+              <div key={item.label} style={{ background: "#111", borderRadius: 12, padding: "10px 12px", border: `1px solid ${item.color}22` }}>
                 <div style={{ fontSize: 9, color: "#555", marginBottom: 3, fontFamily: "monospace" }}>{item.label}</div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: item.color }}>{item.val}</div>
                 <div style={{ fontSize: 10, color: "#444" }}>{item.sub}</div>
@@ -340,9 +240,7 @@ function PlaceDetail({ place, onClose }) {
         </div>
         <div style={{ padding: "16px 20px", borderBottom: "1px solid #1a1a1a" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-            <h4 style={{ margin: 0, fontSize: 13, color: "#888", fontFamily: "monospace", letterSpacing: "0.08em" }}>
-              ATUALIZAÇÕES · {reports.length}
-            </h4>
+            <h4 style={{ margin: 0, fontSize: 13, color: "#888", fontFamily: "monospace", letterSpacing: "0.08em" }}>ATUALIZAÇÕES · {reports.length}</h4>
             <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#22C55E", animation: "pulse 2s infinite" }} />
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -362,34 +260,14 @@ function PlaceDetail({ place, onClose }) {
           </div>
         </div>
         <div style={{ padding: "16px 20px" }}>
-          <h4 style={{ margin: "0 0 10px", fontSize: 13, color: "#888", fontFamily: "monospace", letterSpacing: "0.08em" }}>
-            TÁ LÁ? MANDA O VYBE
-          </h4>
+          <h4 style={{ margin: "0 0 10px", fontSize: 13, color: "#888", fontFamily: "monospace", letterSpacing: "0.08em" }}>TÁ LÁ? MANDA O VYBE</h4>
           <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
             {["🔥", "✨", "⚡", "😴", "🎵", "🍺"].map(m => (
-              <button key={m} onClick={() => setNewMood(m)} style={{
-                fontSize: 18, background: newMood === m ? "#1a1a1a" : "transparent",
-                border: newMood === m ? `1.5px solid ${place.color}66` : "1.5px solid #222",
-                borderRadius: 8, padding: "4px 8px", cursor: "pointer"
-              }}>{m}</button>
+              <button key={m} onClick={() => setNewMood(m)} style={{ fontSize: 18, background: newMood === m ? "#1a1a1a" : "transparent", border: newMood === m ? `1.5px solid ${place.color}66` : "1.5px solid #222", borderRadius: 8, padding: "4px 8px", cursor: "pointer" }}>{m}</button>
             ))}
           </div>
-          <textarea value={newReport} onChange={e => setNewReport(e.target.value)}
-            placeholder="Como tá aí agora? Fila, música, clima..."
-            style={{
-              width: "100%", minHeight: 72, background: "#111",
-              border: "1px solid #222", borderRadius: 12, padding: "10px 12px",
-              color: "#ddd", fontSize: 14, resize: "none", boxSizing: "border-box",
-              outline: "none", fontFamily: "inherit"
-            }}
-          />
-          <button onClick={submit} style={{
-            marginTop: 8, width: "100%", padding: 12,
-            background: sent ? "#1a2e1a" : place.color,
-            color: sent ? "#22C55E" : "#000",
-            border: "none", borderRadius: 12, fontSize: 14, fontWeight: 700,
-            cursor: "pointer", transition: "background 0.3s"
-          }}>
+          <textarea value={newReport} onChange={e => setNewReport(e.target.value)} placeholder="Como tá aí agora? Fila, música, clima..." style={{ width: "100%", minHeight: 72, background: "#111", border: "1px solid #222", borderRadius: 12, padding: "10px 12px", color: "#ddd", fontSize: 14, resize: "none", boxSizing: "border-box", outline: "none", fontFamily: "inherit" }} />
+          <button onClick={submit} style={{ marginTop: 8, width: "100%", padding: 12, background: sent ? "#1a2e1a" : place.color, color: sent ? "#22C55E" : "#000", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: "pointer", transition: "background 0.3s" }}>
             {sent ? "✓ Update enviado!" : "📍 Enviar Atualização"}
           </button>
         </div>
@@ -399,22 +277,17 @@ function PlaceDetail({ place, onClose }) {
   );
 }
 
+// ============================================================
+// PREFERENCES MODAL
+// ============================================================
 function PreferencesModal({ onClose, onApply }) {
   const [vibePrefs, setVibePrefs] = useState([]);
   const [typePrefs, setTypePrefs] = useState([]);
   const [maxCrowd, setMaxCrowd] = useState(100);
-  const toggle = (arr, setArr, val) =>
-    setArr(arr.includes(val) ? arr.filter(x => x !== val) : [...arr, val]);
+  const toggle = (arr, setArr, val) => setArr(arr.includes(val) ? arr.filter(x => x !== val) : [...arr, val]);
   return (
-    <div style={{
-      position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)",
-      zIndex: 600, display: "flex", alignItems: "center", justifyContent: "center",
-      backdropFilter: "blur(4px)", padding: 20
-    }} onClick={onClose}>
-      <div onClick={e => e.stopPropagation()} style={{
-        background: "#0d0d0d", borderRadius: 20,
-        border: "1px solid #222", padding: 24, width: "100%", maxWidth: 400
-      }}>
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 600, display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(4px)", padding: 20 }} onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} style={{ background: "#0d0d0d", borderRadius: 20, border: "1px solid #222", padding: 24, width: "100%", maxWidth: 400 }}>
         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20 }}>
           <h2 style={{ margin: 0, fontSize: 20, color: "#f5f5f5" }}>Seu Vybe</h2>
           <button onClick={onClose} style={{ background: "none", border: "none", color: "#666", fontSize: 18, cursor: "pointer" }}>✕</button>
@@ -422,29 +295,13 @@ function PreferencesModal({ onClose, onApply }) {
         <div style={{ marginBottom: 20 }}>
           <div style={{ fontSize: 11, color: "#555", marginBottom: 10, fontFamily: "monospace" }}>CLIMA</div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-            {VIBES.slice(1).map(v => (
-              <button key={v} onClick={() => toggle(vibePrefs, setVibePrefs, v)} style={{
-                padding: "6px 14px", borderRadius: 20,
-                background: vibePrefs.includes(v) ? "#A78BFA22" : "#111",
-                color: vibePrefs.includes(v) ? "#A78BFA" : "#666",
-                border: vibePrefs.includes(v) ? "1px solid #A78BFA55" : "1px solid #222",
-                cursor: "pointer", fontSize: 13, fontWeight: 600
-              }}>{v}</button>
-            ))}
+            {VIBES.slice(1).map(v => (<button key={v} onClick={() => toggle(vibePrefs, setVibePrefs, v)} style={{ padding: "6px 14px", borderRadius: 20, background: vibePrefs.includes(v) ? "#A78BFA22" : "#111", color: vibePrefs.includes(v) ? "#A78BFA" : "#666", border: vibePrefs.includes(v) ? "1px solid #A78BFA55" : "1px solid #222", cursor: "pointer", fontSize: 13, fontWeight: 600 }}>{v}</button>))}
           </div>
         </div>
         <div style={{ marginBottom: 20 }}>
           <div style={{ fontSize: 11, color: "#555", marginBottom: 10, fontFamily: "monospace" }}>TIPO DE LUGAR</div>
           <div style={{ display: "flex", gap: 8 }}>
-            {TYPES.slice(1).map(t => (
-              <button key={t} onClick={() => toggle(typePrefs, setTypePrefs, t)} style={{
-                padding: "6px 14px", borderRadius: 20,
-                background: typePrefs.includes(t) ? "#34D39922" : "#111",
-                color: typePrefs.includes(t) ? "#34D399" : "#666",
-                border: typePrefs.includes(t) ? "1px solid #34D39955" : "1px solid #222",
-                cursor: "pointer", fontSize: 13, fontWeight: 600, textTransform: "capitalize"
-              }}>{t}</button>
-            ))}
+            {TYPES.slice(1).map(t => (<button key={t} onClick={() => toggle(typePrefs, setTypePrefs, t)} style={{ padding: "6px 14px", borderRadius: 20, background: typePrefs.includes(t) ? "#34D39922" : "#111", color: typePrefs.includes(t) ? "#34D399" : "#666", border: typePrefs.includes(t) ? "1px solid #34D39955" : "1px solid #222", cursor: "pointer", fontSize: 13, fontWeight: 600, textTransform: "capitalize" }}>{t}</button>))}
           </div>
         </div>
         <div style={{ marginBottom: 24 }}>
@@ -452,52 +309,45 @@ function PreferencesModal({ onClose, onApply }) {
             <span style={{ fontSize: 11, color: "#555", fontFamily: "monospace" }}>MAX CROWD</span>
             <span style={{ fontSize: 12, fontWeight: 700, color: crowdColor(maxCrowd) }}>{crowdEmoji(maxCrowd)} {maxCrowd}%</span>
           </div>
-          <input type="range" min={20} max={100} step={5} value={maxCrowd}
-            onChange={e => setMaxCrowd(+e.target.value)}
-            style={{ width: "100%", accentColor: crowdColor(maxCrowd) }}
-          />
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "#444", marginTop: 2 }}>
-            <span>Tranquilo</span><span>Moderado</span><span>Qualquer</span>
-          </div>
+          <input type="range" min={20} max={100} step={5} value={maxCrowd} onChange={e => setMaxCrowd(+e.target.value)} style={{ width: "100%", accentColor: crowdColor(maxCrowd) }} />
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "#444", marginTop: 2 }}><span>Tranquilo</span><span>Moderado</span><span>Qualquer</span></div>
         </div>
-        <button onClick={() => { onApply({ vibePrefs, typePrefs, maxCrowd }); onClose(); }} style={{
-          width: "100%", padding: 14, background: "#A78BFA",
-          border: "none", borderRadius: 12, color: "#000",
-          fontSize: 15, fontWeight: 800, cursor: "pointer"
-        }}>Aplicar ✓</button>
+        <button onClick={() => { onApply({ vibePrefs, typePrefs, maxCrowd }); onClose(); }} style={{ width: "100%", padding: 14, background: "#A78BFA", border: "none", borderRadius: 12, color: "#000", fontSize: 15, fontWeight: 800, cursor: "pointer" }}>Aplicar ✓</button>
       </div>
     </div>
   );
 }
 
-function EventCard({ event, onClick }) {
+// ============================================================
+// EVENT CARD (com favorito)
+// ============================================================
+function EventCard({ event, onClick, isFav, onToggleFav }) {
+  const [animating, setAnimating] = useState(false);
+
+  const handleFav = (e) => {
+    e.stopPropagation();
+    setAnimating(true);
+    setTimeout(() => setAnimating(false), 400);
+    onToggleFav(event);
+  };
+
   return (
-    <div onClick={() => onClick(event)} style={{
-      background: "#111", border: "1px solid #222", borderRadius: 20,
-      overflow: "hidden", cursor: "pointer",
-      transition: "transform 0.15s, border-color 0.15s",
-    }}
+    <div onClick={() => onClick(event)} style={{ background: "#111", border: "1px solid #222", borderRadius: 20, overflow: "hidden", cursor: "pointer", transition: "transform 0.15s, border-color 0.15s" }}
       onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.borderColor = event.color + "88"; }}
       onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.borderColor = "#222"; }}
     >
-      <div style={{
-        background: event.gradient, padding: "24px 20px 16px",
-        position: "relative", overflow: "hidden"
-      }}>
-        <div style={{
-          position: "absolute", top: -20, right: -20, fontSize: 80,
-          opacity: 0.15, transform: "rotate(-10deg)"
-        }}>{event.emoji}</div>
+      <div style={{ background: event.gradient, padding: "24px 20px 16px", position: "relative", overflow: "hidden" }}>
+        <div style={{ position: "absolute", top: -20, right: -20, fontSize: 80, opacity: 0.15, transform: "rotate(-10deg)" }}>{event.emoji}</div>
+        {/* Botão favorito no banner */}
+        <button onClick={handleFav} style={{ position: "absolute", top: 12, right: 12, background: "rgba(0,0,0,0.3)", border: "none", borderRadius: "50%", width: 32, height: 32, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center", transform: animating ? "scale(1.4)" : "scale(1)", transition: "transform 0.2s" }}>
+          {isFav ? "❤️" : "🤍"}
+        </button>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
           <div>
-            <span style={{
-              fontSize: 10, fontWeight: 700, padding: "2px 10px", borderRadius: 20,
-              background: "rgba(0,0,0,0.3)", color: "#fff",
-              textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "monospace"
-            }}>{event.type}</span>
+            <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 10px", borderRadius: 20, background: "rgba(0,0,0,0.3)", color: "#fff", textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "monospace" }}>{event.type}</span>
             <h3 style={{ margin: "8px 0 4px", fontSize: 18, fontWeight: 900, color: "#fff", lineHeight: 1.2 }}>{event.name}</h3>
           </div>
-          <div style={{ fontSize: 32 }}>{event.emoji}</div>
+          <div style={{ fontSize: 32, marginRight: 40 }}>{event.emoji}</div>
         </div>
         <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
           <span style={{ fontSize: 12, color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>📅 {event.date}</span>
@@ -507,20 +357,11 @@ function EventCard({ event, onClick }) {
       <div style={{ padding: "14px 16px" }}>
         <div style={{ fontSize: 12, color: "#666", marginBottom: 10 }}>📍 {event.location}</div>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
-          {event.lineup.map(a => (
-            <span key={a} style={{
-              fontSize: 11, padding: "3px 10px", borderRadius: 20,
-              background: event.color + "22", color: event.color,
-              border: `1px solid ${event.color}44`, fontWeight: 600
-            }}>{a}</span>
-          ))}
+          {(event.lineup || []).map(a => (<span key={a} style={{ fontSize: 11, padding: "3px 10px", borderRadius: 20, background: event.color + "22", color: event.color, border: `1px solid ${event.color}44`, fontWeight: 600 }}>{a}</span>))}
         </div>
         <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center" }}>
-          <div style={{
-            background: event.color, color: "#000",
-            fontSize: 12, fontWeight: 800, padding: "6px 16px", borderRadius: 20
-          }}>
-            A partir de {event.tickets.find(t => t.available)?.price}
+          <div style={{ background: event.color, color: "#000", fontSize: 12, fontWeight: 800, padding: "6px 16px", borderRadius: 20 }}>
+            A partir de {(event.tickets || []).find(t => t.available)?.price || "Consultar"}
           </div>
         </div>
       </div>
@@ -528,33 +369,18 @@ function EventCard({ event, onClick }) {
   );
 }
 
+// ============================================================
+// EVENT DETAIL
+// ============================================================
 function EventDetail({ event, onClose }) {
   return (
-    <div style={{
-      position: "fixed", inset: 0, background: "rgba(0,0,0,0.9)",
-      zIndex: 500, display: "flex", alignItems: "flex-end",
-      backdropFilter: "blur(4px)"
-    }} onClick={onClose}>
-      <div onClick={e => e.stopPropagation()} style={{
-        width: "100%", maxWidth: 480, margin: "0 auto",
-        background: "#0d0d0d", borderRadius: "24px 24px 0 0",
-        border: `1px solid ${event.color}44`,
-        maxHeight: "92vh", overflowY: "auto", padding: "0 0 40px",
-      }}>
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.9)", zIndex: 500, display: "flex", alignItems: "flex-end", backdropFilter: "blur(4px)" }} onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 480, margin: "0 auto", background: "#0d0d0d", borderRadius: "24px 24px 0 0", border: `1px solid ${event.color}44`, maxHeight: "92vh", overflowY: "auto", padding: "0 0 40px" }}>
         <div style={{ height: 4, width: 40, background: "#333", borderRadius: 2, margin: "14px auto 0" }} />
         <div style={{ background: event.gradient, padding: "20px 20px 24px", position: "relative", overflow: "hidden" }}>
           <div style={{ position: "absolute", top: -30, right: -30, fontSize: 120, opacity: 0.1 }}>{event.emoji}</div>
-          <button onClick={onClose} style={{
-            position: "absolute", top: 12, right: 12,
-            background: "rgba(0,0,0,0.3)", border: "none", color: "#fff",
-            width: 32, height: 32, borderRadius: "50%", cursor: "pointer",
-            fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center"
-          }}>✕</button>
-          <span style={{
-            fontSize: 10, fontWeight: 700, padding: "2px 10px", borderRadius: 20,
-            background: "rgba(0,0,0,0.3)", color: "#fff",
-            textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "monospace"
-          }}>{event.type}</span>
+          <button onClick={onClose} style={{ position: "absolute", top: 12, right: 12, background: "rgba(0,0,0,0.3)", border: "none", color: "#fff", width: 32, height: 32, borderRadius: "50%", cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
+          <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 10px", borderRadius: 20, background: "rgba(0,0,0,0.3)", color: "#fff", textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "monospace" }}>{event.type}</span>
           <h2 style={{ margin: "8px 0 4px", fontSize: 24, fontWeight: 900, color: "#fff" }}>{event.name}</h2>
           <div style={{ display: "flex", gap: 14, marginTop: 6 }}>
             <span style={{ fontSize: 13, color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>📅 {event.date}</span>
@@ -569,18 +395,9 @@ function EventDetail({ event, onClose }) {
         <div style={{ padding: "16px 20px", borderBottom: "1px solid #1a1a1a" }}>
           <h4 style={{ margin: "0 0 12px", fontSize: 11, color: "#555", fontFamily: "monospace", letterSpacing: "0.08em" }}>🎵 LINEUP</h4>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {event.lineup.map((a, i) => (
-              <div key={a} style={{
-                display: "flex", alignItems: "center", gap: 12,
-                background: "#111", borderRadius: 12, padding: "10px 14px",
-                border: `1px solid ${event.color}22`
-              }}>
-                <div style={{
-                  width: 28, height: 28, borderRadius: "50%",
-                  background: event.color + "22", color: event.color,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 11, fontWeight: 800
-                }}>{i + 1}</div>
+            {(event.lineup || []).map((a, i) => (
+              <div key={a} style={{ display: "flex", alignItems: "center", gap: 12, background: "#111", borderRadius: 12, padding: "10px 14px", border: `1px solid ${event.color}22` }}>
+                <div style={{ width: 28, height: 28, borderRadius: "50%", background: event.color + "22", color: event.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 800 }}>{i + 1}</div>
                 <span style={{ fontSize: 14, color: "#ddd", fontWeight: 600 }}>{a}</span>
               </div>
             ))}
@@ -589,13 +406,8 @@ function EventDetail({ event, onClose }) {
         <div style={{ padding: "16px 20px" }}>
           <h4 style={{ margin: "0 0 12px", fontSize: 11, color: "#555", fontFamily: "monospace", letterSpacing: "0.08em" }}>🎟 INGRESSOS</h4>
           <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
-            {event.tickets.map(t => (
-              <div key={t.lote} style={{
-                display: "flex", justifyContent: "space-between", alignItems: "center",
-                background: "#111", borderRadius: 12, padding: "12px 14px",
-                border: t.available ? `1px solid ${event.color}33` : "1px solid #1a1a1a",
-                opacity: t.available ? 1 : 0.5
-              }}>
+            {(event.tickets || []).map(t => (
+              <div key={t.lote} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#111", borderRadius: 12, padding: "12px 14px", border: t.available ? `1px solid ${event.color}33` : "1px solid #1a1a1a", opacity: t.available ? 1 : 0.5 }}>
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 700, color: t.available ? "#ddd" : "#555" }}>{t.lote}</div>
                   {!t.available && <div style={{ fontSize: 10, color: "#555" }}>Esgotado</div>}
@@ -605,160 +417,105 @@ function EventDetail({ event, onClose }) {
             ))}
           </div>
           <a href={event.ticketLink} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>
-            <button style={{
-              width: "100%", padding: 14, background: event.gradient,
-              border: "none", borderRadius: 14, color: "#fff",
-              fontSize: 15, fontWeight: 800, cursor: "pointer",
-            }}>🎟 Garantir Ingresso</button>
+            <button style={{ width: "100%", padding: 14, background: event.gradient, border: "none", borderRadius: 14, color: "#fff", fontSize: 15, fontWeight: 800, cursor: "pointer" }}>🎟 Garantir Ingresso</button>
           </a>
-          <div style={{ textAlign: "center", fontSize: 11, color: "#444", marginTop: 8 }}>
-            Você será redirecionado para a plataforma de ingressos
-          </div>
+          <div style={{ textAlign: "center", fontSize: 11, color: "#444", marginTop: 8 }}>Você será redirecionado para a plataforma de ingressos</div>
         </div>
       </div>
     </div>
   );
 }
 
-// FIX 1: O mapa agora é destruído corretamente quando troca de aba
-function MapView({ places, onSelectPlace, isActive }) {
+// ============================================================
+// MAP VIEW
+// ============================================================
+function MapView({ mapPlaces, loadingPlaces, onBoundsChange, onSelectPlace, isActive }) {
   const mapRef = useRef(null);
   const leafletMapRef = useRef(null);
   const markersRef = useRef([]);
+  const debounceRef = useRef(null);
+
+  const clearMarkers = () => { markersRef.current.forEach(m => m.remove()); markersRef.current = []; };
+
+  const renderMarkers = useCallback(() => {
+    if (!leafletMapRef.current || !window.L) return;
+    const L = window.L;
+    clearMarkers();
+    mapPlaces.forEach(place => {
+      if (!place.lat || !place.lng) return;
+      const hue = place.color || "#A78BFA";
+      const icon = L.divIcon({
+        html: `<div style="background:${hue};color:#000;border-radius:20px;padding:5px 10px;font-size:11px;font-weight:800;white-space:nowrap;box-shadow:0 2px 12px ${hue}88;border:2px solid rgba(255,255,255,0.2);cursor:pointer;display:flex;align-items:center;gap:4px;">${place.crowd >= 90 ? "🔴" : place.crowd >= 65 ? "🟡" : "🟢"} ${place.name}</div>`,
+        className: "", iconAnchor: [0, 0]
+      });
+      const marker = L.marker([place.lat, place.lng], { icon }).addTo(leafletMapRef.current).on("click", () => onSelectPlace(place));
+      markersRef.current.push(marker);
+    });
+  }, [mapPlaces, onSelectPlace]);
+
+  const getCurrentBounds = useCallback(() => {
+    if (!leafletMapRef.current) return null;
+    const bounds = leafletMapRef.current.getBounds();
+    return { latMin: bounds.getSouth(), latMax: bounds.getNorth(), lngMin: bounds.getWest(), lngMax: bounds.getEast() };
+  }, []);
+
+  const handleMapMoveEnd = useCallback(() => {
+    const bounds = getCurrentBounds();
+    if (!bounds) return;
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => { onBoundsChange(bounds); }, 650);
+  }, [getCurrentBounds, onBoundsChange]);
+
+  useEffect(() => { renderMarkers(); }, [renderMarkers]);
 
   useEffect(() => {
     if (!isActive) {
-      // Destrói o mapa quando a aba não está ativa
-      if (leafletMapRef.current) {
-        leafletMapRef.current.remove();
-        leafletMapRef.current = null;
-        markersRef.current = [];
-      }
+      if (leafletMapRef.current) { clearMarkers(); leafletMapRef.current.remove(); leafletMapRef.current = null; }
       return;
     }
-
     if (leafletMapRef.current) return;
-
     if (!document.getElementById("leaflet-css")) {
-      const link = document.createElement("link");
-      link.id = "leaflet-css";
-      link.rel = "stylesheet";
-      link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
-      document.head.appendChild(link);
+      const link = document.createElement("link"); link.id = "leaflet-css"; link.rel = "stylesheet"; link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"; document.head.appendChild(link);
     }
-
     const initMap = () => {
       if (!window.L || !mapRef.current) return;
       const L = window.L;
-
-      const map = L.map(mapRef.current, {
-        center: [-23.1891, -45.8841],
-        zoom: 14,
-        zoomControl: false,
-      });
-
-      L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-        attribution: "© OpenStreetMap © CARTO",
-        subdomains: "abcd",
-        maxZoom: 19
-      }).addTo(map);
-
+      const map = L.map(mapRef.current, { center: [-23.1891, -45.8841], zoom: 14, zoomControl: false });
+      L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", { attribution: "© OpenStreetMap © CARTO", subdomains: "abcd", maxZoom: 19 }).addTo(map);
       L.control.zoom({ position: "bottomright" }).addTo(map);
-
-      const userIcon = L.divIcon({
-        html: `<div style="width:16px;height:16px;background:#60A5FA;border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 4px rgba(96,165,250,0.3)"></div>`,
-        className: "",
-        iconSize: [16, 16],
-        iconAnchor: [8, 8],
-      });
-      L.marker([-23.1860, -45.8870], { icon: userIcon }).addTo(map)
-        .bindPopup("<b>Você está aqui</b>");
-
-      places.forEach(place => {
-        const hue = place.color;
-        const icon = L.divIcon({
-          html: `<div style="
-            background:${hue};
-            color:#000;
-            border-radius:20px;
-            padding:5px 10px;
-            font-size:11px;
-            font-weight:800;
-            white-space:nowrap;
-            box-shadow:0 2px 12px ${hue}88;
-            border:2px solid rgba(255,255,255,0.2);
-            cursor:pointer;
-            display:flex;align-items:center;gap:4px;
-          ">
-            ${place.crowd >= 90 ? "🔴" : place.crowd >= 65 ? "🟡" : "🟢"}
-            ${place.name}
-          </div>`,
-          className: "",
-          iconAnchor: [0, 0],
-        });
-
-        const marker = L.marker([place.lat, place.lng], { icon })
-          .addTo(map)
-          .on("click", () => onSelectPlace(place));
-
-        markersRef.current.push(marker);
-      });
-
+      const userIcon = L.divIcon({ html: `<div style="width:16px;height:16px;background:#60A5FA;border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 4px rgba(96,165,250,0.3)"></div>`, className: "", iconSize: [16, 16], iconAnchor: [8, 8] });
+      L.marker([-23.1860, -45.8870], { icon: userIcon }).addTo(map).bindPopup("<b>Você está aqui</b>");
+      map.on("moveend zoomend", handleMapMoveEnd);
       leafletMapRef.current = map;
-      setTimeout(() => map.invalidateSize(), 100);
+      setTimeout(() => { map.invalidateSize(); const bounds = getCurrentBounds(); if (bounds) onBoundsChange(bounds); }, 150);
     };
-
-    if (window.L) {
-      initMap();
-    } else {
-      const script = document.createElement("script");
-      script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
-      script.onload = initMap;
-      document.head.appendChild(script);
+    if (window.L) { initMap(); } else {
+      const script = document.createElement("script"); script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"; script.onload = initMap; document.head.appendChild(script);
     }
-
     return () => {
-      if (leafletMapRef.current) {
-        leafletMapRef.current.remove();
-        leafletMapRef.current = null;
-        markersRef.current = [];
-      }
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      if (leafletMapRef.current) { leafletMapRef.current.off("moveend zoomend", handleMapMoveEnd); clearMarkers(); leafletMapRef.current.remove(); leafletMapRef.current = null; }
     };
-  }, [isActive]);
+  }, [isActive, handleMapMoveEnd, getCurrentBounds, onBoundsChange]);
 
   return (
-    // FIX 2: z-index do mapa agora é menor que o da barra de navegação
     <div style={{ position: "relative", height: "100%", width: "100%", zIndex: 1 }}>
       <div ref={mapRef} style={{ height: "100%", width: "100%", borderRadius: 0 }} />
-
-      <div style={{
-        position: "absolute", top: 16, left: 16, zIndex: 10,
-        background: "rgba(10,10,10,0.85)", borderRadius: 12,
-        border: "1px solid #222", padding: "10px 14px",
-        backdropFilter: "blur(8px)"
-      }}>
-        <div style={{ fontSize: 11, color: "#666", marginBottom: 6, fontFamily: "monospace" }}>CROWD AGORA</div>
-        {[["🟢", "Tranquilo"], ["🟡", "Movimentado"], ["🔴", "Lotado"]].map(([e, l]) => (
-          <div key={l} style={{ fontSize: 12, color: "#aaa", display: "flex", gap: 6, alignItems: "center", marginBottom: 2 }}>
-            <span>{e}</span><span>{l}</span>
-          </div>
-        ))}
+      <div style={{ position: "absolute", top: 12, left: 12, zIndex: 10, background: "rgba(10,10,10,0.88)", borderRadius: 18, border: "1px solid #222", padding: "7px 12px", fontSize: 12, color: "#ddd", whiteSpace: "nowrap", backdropFilter: "blur(8px)", fontWeight: 700 }}>
+        {loadingPlaces ? "buscando rolês..." : `${mapPlaces.length} nesta área`}
       </div>
-
-      <div style={{
-        position: "absolute", bottom: 100, left: "50%", transform: "translateX(-50%)",
-        zIndex: 10, background: "rgba(10,10,10,0.85)", borderRadius: 20,
-        border: "1px solid #222", padding: "6px 14px",
-        fontSize: 12, color: "#777", whiteSpace: "nowrap",
-        backdropFilter: "blur(8px)"
-      }}>
-        Toque em um lugar para ver detalhes
+      <div style={{ position: "absolute", bottom: 12, left: "50%", transform: "translateX(-50%)", zIndex: 10, background: "rgba(10,10,10,0.85)", borderRadius: 20, border: "1px solid #222", padding: "6px 14px", fontSize: 12, color: "#777", whiteSpace: "nowrap", backdropFilter: "blur(8px)" }}>
+        Arraste o mapa para descobrir lugares
       </div>
     </div>
   );
 }
 
+// ============================================================
+// APP PRINCIPAL
+// ============================================================
 export default function App() {
+  const [user, setUser] = useState(undefined); // undefined = carregando, null = sem login
   const [tab, setTab] = useState("discover");
   const [selected, setSelected] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -770,55 +527,62 @@ export default function App() {
   const [search, setSearch] = useState("");
   const [events, setEvents] = useState(EVENTS);
   const [loadingEvents, setLoadingEvents] = useState(true);
+  const [mapPlaces, setMapPlaces] = useState(PLACES);
+  const [loadingPlaces, setLoadingPlaces] = useState(false);
 
-  // Busca eventos do Supabase
+  // Favoritos
+  const [favPlaces, setFavPlaces] = useState([]);
+  const [favEvents, setFavEvents] = useState([]);
+
+  const toggleFavPlace = (place) => {
+    setFavPlaces(prev => prev.some(p => p.id === place.id) ? prev.filter(p => p.id !== place.id) : [...prev, place]);
+  };
+  const toggleFavEvent = (event) => {
+    setFavEvents(prev => prev.some(e => e.id === event.id) ? prev.filter(e => e.id !== event.id) : [...prev, event]);
+  };
+
+  // Checar sessão do usuário
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Buscar eventos
   useEffect(() => {
     const fetchEvents = async () => {
       setLoadingEvents(true);
-      const { data, error } = await supabase
-        .from("events")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (error) {
-        console.error("Erro ao buscar eventos:", error);
-        // Se der erro, mantém os eventos de exemplo
-        setEvents(EVENTS);
-      } else if (data && data.length > 0) {
-        // Formata os dados do Supabase para o formato do app
-        const formatted = data.map(e => ({
-          id: e.id,
-          name: e.name,
-          type: e.type,
-          date: e.date,
-          time: e.time,
-          location: e.location,
-          address: e.address,
-          description: e.description,
-          lineup: e.lineup || [],
-          confirmed: e.confirmed || 0,
-          color: e.color || "#A78BFA",
-          gradient: e.gradient || `linear-gradient(135deg, ${e.color || "#A78BFA"}, #60A5FA)`,
-          emoji: e.emoji || "🎉",
-          tickets: e.tickets || [],
-          ticketLink: e.ticket_link || "#",
-        }));
-        setEvents(formatted);
-      } else {
-        // Se não tiver eventos no banco, usa os de exemplo
-        setEvents(EVENTS);
+      const { data, error } = await supabase.from("events").select("*").order("created_at", { ascending: false });
+      if (error || !data || data.length === 0) { setEvents(EVENTS); } else {
+        setEvents(data.map(e => ({ id: e.id, name: e.name, type: e.type, date: e.date, time: e.time, location: e.location, address: e.address, description: e.description, lineup: e.lineup || [], color: e.color || "#A78BFA", gradient: e.gradient || `linear-gradient(135deg, ${e.color || "#A78BFA"}, #60A5FA)`, emoji: e.emoji || "🎉", tickets: e.tickets || [], ticketLink: e.ticket_link || "#" })));
       }
       setLoadingEvents(false);
     };
-
     fetchEvents();
   }, []);
 
-  const filtered = PLACES.filter(p => {
+  const filterLocalPlacesByBounds = useCallback((bounds) => {
+    return PLACES.filter(p => p.lat >= bounds.latMin && p.lat <= bounds.latMax && p.lng >= bounds.lngMin && p.lng <= bounds.lngMax);
+  }, []);
+
+  const fetchPlacesInBounds = useCallback(async (bounds) => {
+    setLoadingPlaces(true);
+    try {
+      const { data, error } = await supabase.from("places").select("*").gte("lat", bounds.latMin).lte("lat", bounds.latMax).gte("lng", bounds.lngMin).lte("lng", bounds.lngMax);
+      if (error || !data || data.length === 0) { setMapPlaces(filterLocalPlacesByBounds(bounds)); }
+      else { setMapPlaces(data.map(p => ({ ...p, tags: p.tags || [], reports: p.reports || [] }))); }
+    } catch { setMapPlaces(filterLocalPlacesByBounds(bounds)); }
+    finally { setLoadingPlaces(false); }
+  }, [filterLocalPlacesByBounds]);
+
+  const filteredMapPlaces = mapPlaces.filter(p => {
     if (filterVibe !== "All" && p.vibe !== filterVibe) return false;
     if (filterType !== "All" && p.type !== filterType) return false;
-    if (search && !p.name.toLowerCase().includes(search.toLowerCase()) &&
-      !p.tags.some(t => t.includes(search.toLowerCase()))) return false;
+    if (search && !p.name.toLowerCase().includes(search.toLowerCase()) && !(p.tags || []).some(t => t.toLowerCase().includes(search.toLowerCase()))) return false;
     if (prefs) {
       if (prefs.vibePrefs.length && !prefs.vibePrefs.includes(p.vibe)) return false;
       if (prefs.typePrefs.length && !prefs.typePrefs.includes(p.type)) return false;
@@ -827,145 +591,113 @@ export default function App() {
     return true;
   });
 
-  const filteredEvents = events.filter(e =>
-    filterEventType === "Todos" || e.type === filterEventType
-  );
+  const filteredEvents = events.filter(e => filterEventType === "Todos" || e.type === filterEventType);
+
+  // Carregando sessão
+  if (user === undefined) {
+    return (
+      <div style={{ height: "100vh", background: "#080808", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "system-ui" }}>
+        <div style={{ fontSize: 32, fontWeight: 900, background: "linear-gradient(90deg, #A78BFA, #F472B6, #FF6B6B)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>vybe.</div>
+      </div>
+    );
+  }
+
+  // Tela de login
+  if (user === null) {
+    return <LoginScreen onLogin={() => setUser(null)} />;
+  }
 
   return (
-    <div style={{
-      height: "100vh", background: "#080808", color: "#f5f5f5",
-      maxWidth: 480, margin: "0 auto", position: "relative",
-      fontFamily: "system-ui, -apple-system, sans-serif",
-      display: "flex", flexDirection: "column", overflow: "hidden"
-    }}>
+    <div style={{ height: "100vh", background: "#080808", color: "#f5f5f5", maxWidth: 480, margin: "0 auto", position: "relative", fontFamily: "system-ui, -apple-system, sans-serif", display: "flex", flexDirection: "column", overflow: "hidden" }}>
 
+      {/* HEADER DISCOVER */}
       {tab === "discover" && (
-        <div style={{
-          background: "linear-gradient(180deg, #080808 80%, transparent)",
-          padding: "20px 20px 0", flexShrink: 0
-        }}>
+        <div style={{ background: "linear-gradient(180deg, #080808 90%, transparent)", padding: "20px 20px 10px", flexShrink: 0, position: "relative", zIndex: 3 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
             <div>
-              <h1 style={{
-                margin: 0, fontSize: 28, fontWeight: 800,
-                background: "linear-gradient(90deg, #A78BFA, #F472B6, #FF6B6B)",
-                WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent"
-              }}>vybe.</h1>
-              <div style={{ fontSize: 11, color: "#444", marginTop: 1 }}>📍 São José dos Campos, SP</div>
+              <h1 style={{ margin: 0, fontSize: 28, fontWeight: 800, background: "linear-gradient(90deg, #A78BFA, #F472B6, #FF6B6B)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>vybe.</h1>
+              <div style={{ fontSize: 11, color: "#444", marginTop: 1 }}>📍 Explore pelo mapa</div>
             </div>
-            <button onClick={() => setShowPrefs(true)} style={{
-              background: prefs ? "#A78BFA22" : "#111",
-              border: prefs ? "1px solid #A78BFA55" : "1px solid #222",
-              borderRadius: 20, padding: "8px 14px",
-              color: prefs ? "#A78BFA" : "#888", cursor: "pointer",
-              fontSize: 12, fontWeight: 600, display: "flex", gap: 6, alignItems: "center"
-            }}>
-              <span>⚡</span>{prefs ? "Prefs On" : "Meu Vybe"}
-            </button>
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              {user && user.email && (
+                <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#A78BFA22", border: "1px solid #A78BFA44", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: "#A78BFA", fontWeight: 700 }}>
+                  {user.email[0].toUpperCase()}
+                </div>
+              )}
+              <button onClick={() => setShowPrefs(true)} style={{ background: prefs ? "#A78BFA22" : "#111", border: prefs ? "1px solid #A78BFA55" : "1px solid #222", borderRadius: 20, padding: "8px 14px", color: prefs ? "#A78BFA" : "#888", cursor: "pointer", fontSize: 12, fontWeight: 600, display: "flex", gap: 6, alignItems: "center" }}>
+                <span>⚡</span>{prefs ? "Prefs On" : "Meu Vybe"}
+              </button>
+            </div>
           </div>
           <div style={{ marginBottom: 10 }}>
-            <input value={search} onChange={e => setSearch(e.target.value)}
-              placeholder="🔍  buscar lugares, música, tags..."
-              style={{
-                width: "100%", background: "#111", border: "1px solid #222",
-                borderRadius: 12, padding: "10px 14px",
-                color: "#ddd", fontSize: 14, outline: "none",
-                fontFamily: "inherit", boxSizing: "border-box"
-              }}
-            />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="🔍 buscar bares, festas, música, tags..." style={{ width: "100%", background: "#111", border: "1px solid #222", borderRadius: 12, padding: "10px 14px", color: "#ddd", fontSize: 14, outline: "none", fontFamily: "inherit", boxSizing: "border-box" }} />
           </div>
-          <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 12, scrollbarWidth: "none" }}>
-            {TYPES.map(t => (
-              <button key={t} onClick={() => setFilterType(t)} style={{
-                flexShrink: 0, padding: "5px 12px", borderRadius: 20,
-                background: filterType === t ? "#f5f5f5" : "#111",
-                color: filterType === t ? "#080808" : "#666",
-                border: filterType === t ? "none" : "1px solid #222",
-                fontSize: 12, fontWeight: 600, cursor: "pointer", textTransform: "capitalize"
-              }}>{t}</button>
-            ))}
+          <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 4, scrollbarWidth: "none" }}>
+            {TYPES.map(t => (<button key={t} onClick={() => setFilterType(t)} style={{ flexShrink: 0, padding: "5px 12px", borderRadius: 20, background: filterType === t ? "#f5f5f5" : "#111", color: filterType === t ? "#080808" : "#666", border: filterType === t ? "none" : "1px solid #222", fontSize: 12, fontWeight: 600, cursor: "pointer", textTransform: "capitalize" }}>{t}</button>))}
             <div style={{ width: 1, background: "#222", margin: "0 4px", flexShrink: 0 }} />
-            {VIBES.slice(1).map(v => (
-              <button key={v} onClick={() => setFilterVibe(filterVibe === v ? "All" : v)} style={{
-                flexShrink: 0, padding: "5px 12px", borderRadius: 20,
-                background: filterVibe === v ? "#A78BFA22" : "transparent",
-                color: filterVibe === v ? "#A78BFA" : "#555",
-                border: filterVibe === v ? "1px solid #A78BFA44" : "1px solid #1a1a1a",
-                fontSize: 12, fontWeight: 600, cursor: "pointer"
-              }}>{v}</button>
-            ))}
+            {VIBES.slice(1).map(v => (<button key={v} onClick={() => setFilterVibe(filterVibe === v ? "All" : v)} style={{ flexShrink: 0, padding: "5px 12px", borderRadius: 20, background: filterVibe === v ? "#A78BFA22" : "transparent", color: filterVibe === v ? "#A78BFA" : "#555", border: filterVibe === v ? "1px solid #A78BFA44" : "1px solid #1a1a1a", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>{v}</button>))}
           </div>
         </div>
       )}
 
-      {tab === "map" && (
-        <div style={{
-          padding: "20px 20px 12px", flexShrink: 0,
-          background: "#080808", position: "relative", zIndex: 2
-        }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div>
-              <h1 style={{
-                margin: 0, fontSize: 28, fontWeight: 800,
-                background: "linear-gradient(90deg, #A78BFA, #F472B6, #FF6B6B)",
-                WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent"
-              }}>vybe.</h1>
-              <div style={{ fontSize: 11, color: "#444", marginTop: 1 }}>📍 São José dos Campos, SP</div>
-            </div>
-            <div style={{
-              background: "#111", border: "1px solid #222", borderRadius: 20,
-              padding: "6px 12px", fontSize: 12, color: "#666"
-            }}>
-              {PLACES.length} lugares
-            </div>
-          </div>
-        </div>
-      )}
+      <div style={{ flex: 1, overflow: tab === "discover" ? "hidden" : "auto", position: "relative", display: "flex", flexDirection: "column" }}>
 
-      <div style={{ flex: 1, overflow: tab === "map" ? "hidden" : "auto", position: "relative" }}>
-
+        {/* DISCOVER */}
         {tab === "discover" && (
-          <div style={{ padding: "0 16px 100px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, padding: "0 4px" }}>
-              <span style={{ fontSize: 13, color: "#555" }}>{filtered.length} lugares próximos</span>
-              <div style={{ flex: 1, height: 1, background: "#1a1a1a" }} />
-              <span style={{ fontSize: 11, color: "#444", fontFamily: "monospace" }}>
-                {new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
-              </span>
+          <>
+            <div style={{ height: "42vh", minHeight: 300, width: "100%", position: "relative", flexShrink: 0, borderTop: "1px solid #111", borderBottom: "1px solid #111" }}>
+              <MapView mapPlaces={filteredMapPlaces} loadingPlaces={loadingPlaces} onBoundsChange={fetchPlacesInBounds} onSelectPlace={setSelected} isActive={tab === "discover"} />
             </div>
-            {filtered.length === 0 && (
-              <div style={{ textAlign: "center", padding: "60px 20px", color: "#555" }}>
-                <div style={{ fontSize: 40, marginBottom: 12 }}>🔍</div>
-                <div style={{ fontSize: 16, fontWeight: 600 }}>Nenhum lugar nos filtros</div>
-                <div style={{ fontSize: 13, marginTop: 6 }}>Tenta ajustar suas preferências</div>
+            <div style={{ flex: 1, overflowY: "auto", padding: "14px 16px 100px", background: "#080808" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, padding: "0 4px" }}>
+                <span style={{ fontSize: 13, color: "#aaa", fontWeight: 700 }}>{loadingPlaces ? "Buscando rolês..." : `${filteredMapPlaces.length} lugares nesta área`}</span>
+                <div style={{ flex: 1, height: 1, background: "#1a1a1a" }} />
+                <span style={{ fontSize: 11, color: "#444", fontFamily: "monospace" }}>{new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>
               </div>
-            )}
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {filtered.map(place => (
-                <PlaceCard key={place.id} place={place} onClick={setSelected} />
-              ))}
+              {filteredMapPlaces.length === 0 && !loadingPlaces && (
+                <div style={{ textAlign: "center", padding: "40px 20px", color: "#555" }}>
+                  <div style={{ fontSize: 40, marginBottom: 12 }}>🗺️</div>
+                  <div style={{ fontSize: 16, fontWeight: 700 }}>Nenhum lugar nessa área</div>
+                  <div style={{ fontSize: 13, marginTop: 6 }}>Arraste o mapa ou ajuste os filtros.</div>
+                </div>
+              )}
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {filteredMapPlaces.map(place => (<PlaceCard key={place.id} place={place} onClick={setSelected} isFav={favPlaces.some(p => p.id === place.id)} onToggleFav={toggleFavPlace} />))}
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* FESTAS */}
+        {tab === "festas" && (
+          <div style={{ padding: "0 16px 100px" }}>
+            <div style={{ padding: "20px 0 12px" }}>
+              <h2 style={{ margin: "0 0 2px", fontSize: 24, fontWeight: 800, color: "#f5f5f5" }}>Festas & Shows 🎉</h2>
+              <p style={{ margin: "0 0 14px", fontSize: 13, color: "#555" }}>Eventos próximos em São José dos Campos</p>
+              <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 8, scrollbarWidth: "none" }}>
+                {EVENT_TYPES.map(t => (<button key={t} onClick={() => setFilterEventType(t)} style={{ flexShrink: 0, padding: "5px 14px", borderRadius: 20, background: filterEventType === t ? "#f5f5f5" : "#111", color: filterEventType === t ? "#080808" : "#666", border: filterEventType === t ? "none" : "1px solid #222", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>{t}</button>))}
+              </div>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              {loadingEvents ? (
+                <div style={{ textAlign: "center", padding: "60px 20px", color: "#555" }}><div style={{ fontSize: 40, marginBottom: 12 }}>⏳</div><div style={{ fontSize: 16, fontWeight: 600 }}>Carregando eventos...</div></div>
+              ) : filteredEvents.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "60px 20px", color: "#555" }}><div style={{ fontSize: 40, marginBottom: 12 }}>🎉</div><div style={{ fontSize: 16, fontWeight: 600 }}>Nenhum evento nessa categoria</div></div>
+              ) : (
+                filteredEvents.map(event => (<EventCard key={event.id} event={event} onClick={setSelectedEvent} isFav={favEvents.some(e => e.id === event.id)} onToggleFav={toggleFavEvent} />))
+              )}
             </div>
           </div>
         )}
 
-        {/* FIX 3: MapView agora recebe isActive para saber quando deve existir */}
-        {tab === "map" && (
-          <div style={{ height: "100%", width: "100%" }}>
-            <MapView places={PLACES} onSelectPlace={setSelected} isActive={tab === "map"} />
-          </div>
-        )}
-
+        {/* AO VIVO */}
         {tab === "live" && (
           <div style={{ padding: "20px 16px 100px" }}>
             <h2 style={{ margin: "0 0 4px", fontSize: 22, fontWeight: 800, color: "#f5f5f5" }}>Ao Vivo 🔴</h2>
             <p style={{ margin: "0 0 20px", fontSize: 13, color: "#555" }}>Updates em tempo real de quem está lá agora</p>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {PLACES.flatMap(p => p.reports.map(r => ({ ...r, place: p }))).map((r, i) => (
-                <div key={i} onClick={() => setSelected(r.place)} style={{
-                  background: "#111", border: "1px solid #1e1e1e",
-                  borderRadius: 14, padding: "12px 14px", cursor: "pointer",
-                  borderLeft: `3px solid ${r.place.color}`
-                }}>
+              {PLACES.flatMap(p => (p.reports || []).map(r => ({ ...r, place: p }))).map((r, i) => (
+                <div key={i} onClick={() => setSelected(r.place)} style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 14, padding: "12px 14px", cursor: "pointer", borderLeft: `3px solid ${r.place.color}` }}>
                   <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
                     <Avatar initials={r.avatar} color={r.place.color} />
                     <div style={{ flex: 1 }}>
@@ -985,84 +717,61 @@ export default function App() {
           </div>
         )}
 
+        {/* SALVOS */}
         {tab === "saved" && (
-          <div style={{ padding: "20px 16px 100px", textAlign: "center", paddingTop: 80 }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>♡</div>
-            <div style={{ fontSize: 18, fontWeight: 700, color: "#555" }}>Nenhum lugar salvo</div>
-            <div style={{ fontSize: 13, color: "#444", marginTop: 8 }}>Salve seus lugares favoritos para encontrá-los rápido</div>
-          </div>
-        )}
+          <div style={{ padding: "20px 16px 100px" }}>
+            <h2 style={{ margin: "0 0 20px", fontSize: 24, fontWeight: 800, color: "#f5f5f5" }}>Salvos ❤️</h2>
 
-        {tab === "festas" && (
-          <div style={{ padding: "0 16px 100px" }}>
-            {/* Header */}
-            <div style={{ padding: "20px 0 12px" }}>
-              <h2 style={{ margin: "0 0 2px", fontSize: 24, fontWeight: 800, color: "#f5f5f5" }}>Festas & Shows 🎉</h2>
-              <p style={{ margin: "0 0 14px", fontSize: 13, color: "#555" }}>Eventos próximos em São José dos Campos</p>
-              {/* Filtros */}
-              <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 8, scrollbarWidth: "none" }}>
-                {EVENT_TYPES.map(t => (
-                  <button key={t} onClick={() => setFilterEventType(t)} style={{
-                    flexShrink: 0, padding: "5px 14px", borderRadius: 20,
-                    background: filterEventType === t ? "#f5f5f5" : "#111",
-                    color: filterEventType === t ? "#080808" : "#666",
-                    border: filterEventType === t ? "none" : "1px solid #222",
-                    fontSize: 12, fontWeight: 600, cursor: "pointer"
-                  }}>{t}</button>
-                ))}
-              </div>
-            </div>
-            {/* Cards */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              {loadingEvents ? (
-                <div style={{ textAlign: "center", padding: "60px 20px", color: "#555" }}>
-                  <div style={{ fontSize: 40, marginBottom: 12 }}>⏳</div>
-                  <div style={{ fontSize: 16, fontWeight: 600 }}>Carregando eventos...</div>
-                </div>
-              ) : filteredEvents.length === 0 ? (
-                <div style={{ textAlign: "center", padding: "60px 20px", color: "#555" }}>
-                  <div style={{ fontSize: 40, marginBottom: 12 }}>🎉</div>
-                  <div style={{ fontSize: 16, fontWeight: 600 }}>Nenhum evento nessa categoria</div>
-                  <div style={{ fontSize: 13, marginTop: 6 }}>Tenta outro filtro!</div>
+            {/* Lugares salvos */}
+            <div style={{ marginBottom: 28 }}>
+              <h3 style={{ margin: "0 0 12px", fontSize: 14, color: "#666", fontFamily: "monospace", letterSpacing: "0.08em" }}>LUGARES SALVOS · {favPlaces.length}</h3>
+              {favPlaces.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "30px 20px", background: "#111", borderRadius: 16, border: "1px solid #1a1a1a" }}>
+                  <div style={{ fontSize: 32, marginBottom: 8 }}>🤍</div>
+                  <div style={{ fontSize: 14, color: "#555" }}>Nenhum lugar salvo ainda</div>
+                  <div style={{ fontSize: 12, color: "#444", marginTop: 4 }}>Toca o ♡ nos cards para salvar</div>
                 </div>
               ) : (
-                filteredEvents.map(event => (
-                  <EventCard key={event.id} event={event} onClick={setSelectedEvent} />
-                ))
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  {favPlaces.map(place => (<PlaceCard key={place.id} place={place} onClick={setSelected} isFav={true} onToggleFav={toggleFavPlace} />))}
+                </div>
+              )}
+            </div>
+
+            {/* Festas salvas */}
+            <div>
+              <h3 style={{ margin: "0 0 12px", fontSize: 14, color: "#666", fontFamily: "monospace", letterSpacing: "0.08em" }}>FESTAS SALVAS · {favEvents.length}</h3>
+              {favEvents.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "30px 20px", background: "#111", borderRadius: 16, border: "1px solid #1a1a1a" }}>
+                  <div style={{ fontSize: 32, marginBottom: 8 }}>🤍</div>
+                  <div style={{ fontSize: 14, color: "#555" }}>Nenhuma festa salva ainda</div>
+                  <div style={{ fontSize: 12, color: "#444", marginTop: 4 }}>Toca o ♡ nos cards de festas</div>
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                  {favEvents.map(event => (<EventCard key={event.id} event={event} onClick={setSelectedEvent} isFav={true} onToggleFav={toggleFavEvent} />))}
+                </div>
               )}
             </div>
           </div>
         )}
       </div>
 
-      {/* FIX 4: Barra de navegação com z-index alto para ficar sempre acima do mapa */}
-      <div style={{
-        position: "absolute", bottom: 0, left: 0, right: 0,
-        background: "linear-gradient(0deg, #080808 60%, transparent)",
-        padding: "16px 20px 24px", flexShrink: 0,
-        zIndex: 400,
-      }}>
-        <div style={{
-          display: "flex", background: "#111",
-          border: "1px solid #1e1e1e", borderRadius: 16, padding: 4, gap: 4
-        }}>
+      {/* BARRA DE NAVEGAÇÃO */}
+      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "linear-gradient(0deg, #080808 60%, transparent)", padding: "16px 20px 24px", zIndex: 400 }}>
+        <div style={{ display: "flex", background: "#111", border: "1px solid #1e1e1e", borderRadius: 16, padding: 4, gap: 4 }}>
           {[
-            { id: "discover", icon: "🌐", label: "Descobrir" },
-            { id: "map", icon: "🗺", label: "Mapa" },
+            { id: "discover", icon: "🗺", label: "Explorar" },
             { id: "festas", icon: "🎉", label: "Festas" },
             { id: "live", icon: "🔴", label: "Ao Vivo" },
-            { id: "saved", icon: "♡", label: "Salvos" }
+            { id: "saved", icon: "❤️", label: "Salvos", badge: favPlaces.length + favEvents.length }
           ].map(t => (
-            <button key={t.id} onClick={() => setTab(t.id)} style={{
-              flex: 1, padding: "8px 0",
-              background: tab === t.id ? "#1e1e1e" : "transparent",
-              border: "none", borderRadius: 12, cursor: "pointer",
-              color: tab === t.id ? "#f5f5f5" : "#555",
-              fontSize: 11, fontWeight: 600,
-              position: "relative", zIndex: 400,
-            }}>
+            <button key={t.id} onClick={() => setTab(t.id)} style={{ flex: 1, padding: "8px 0", background: tab === t.id ? "#1e1e1e" : "transparent", border: "none", borderRadius: 12, cursor: "pointer", color: tab === t.id ? "#f5f5f5" : "#555", fontSize: 11, fontWeight: 600, position: "relative", zIndex: 400 }}>
               <div style={{ fontSize: 16, marginBottom: 1 }}>{t.icon}</div>
               {t.label}
+              {t.badge > 0 && (
+                <div style={{ position: "absolute", top: 4, right: "50%", transform: "translateX(8px)", background: "#EF4444", borderRadius: "50%", width: 16, height: 16, fontSize: 9, fontWeight: 800, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>{t.badge}</div>
+              )}
             </button>
           ))}
         </div>
