@@ -781,15 +781,6 @@ export default function App() {
   const [favPlaces, setFavPlaces] = useState([]);
   const [favEvents, setFavEvents] = useState([]);
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setGuest(false);
-    setShowProfile(false);
-    setFavPlaces([]);
-    setFavEvents([]);
-  };
-
   const toggleFavPlace = (place) => {
     setFavPlaces(prev => prev.some(p => p.id === place.id) ? prev.filter(p => p.id !== place.id) : [...prev, place]);
   };
