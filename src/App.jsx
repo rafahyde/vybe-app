@@ -782,7 +782,6 @@ function HomeMapView({ places, onSelectPlace, onAreaChange }) {
 
   useEffect(() => {
     if (leafletMapRef.current) return;
-    if (mapRef.current && mapRef.current._leaflet_id) return;
 
     if (!document.getElementById("leaflet-css")) {
       const link = document.createElement("link");
@@ -794,7 +793,11 @@ function HomeMapView({ places, onSelectPlace, onAreaChange }) {
 
     const initMap = () => {
       if (!window.L || !mapRef.current) return;
-      if (mapRef.current._leaflet_id) return;
+      if (leafletMapRef.current) return;
+      if (mapRef.current._leaflet_id) {
+        mapRef.current._leaflet_id = null;
+        try { mapRef.current.innerHTML = ""; } catch(e) {}
+      }
       const L = window.L;
 
       const map = L.map(mapRef.current, {
@@ -1013,7 +1016,7 @@ export default function App() {
   const [user, setUser] = useState(undefined);
   const [guest, setGuest] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
-  const [tab, setTab] = useState("discover");
+  const [tab, setTab] = useState("home");
   const [selected, setSelected] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [showPrefs, setShowPrefs] = useState(false);
@@ -1025,6 +1028,7 @@ export default function App() {
   const [events, setEvents] = useState(EVENTS);
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [mapPlaces, setMapPlaces] = useState(PLACES);
+  const [areaPlaces, setAreaPlaces] = useState(PLACES);
   const [loadingPlaces, setLoadingPlaces] = useState(false);
   const [favPlaces, setFavPlaces] = useState([]);
   const [favEvents, setFavEvents] = useState([]);
