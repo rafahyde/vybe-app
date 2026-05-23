@@ -1,92 +1,141 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { supabase } from "./supabase";
+
+// ─── DATA ────────────────────────────────────────────────────────────────────
 
 const PLACES = [
   {
     id: 1, name: "Bar Coronel", type: "bar", distance: "0.3km",
     tags: ["petiscos", "chopp", "tradicional"], rating: 4.7, crowd: 80,
-    vibe: "Lively", music: "Sertanejo", cover: "Grátis",
-    color: "#FF6B6B", lat: -23.1825311, lng: -45.8833651, checkins: 34,
+    music: "Sertanejo", cover: "Grátis", color: "#FF6B6B",
+    lat: -23.1825311, lng: -45.8833651, checkins: 34,
     address: "R. Francisco Raphael, 298 - Centro",
     reports: [
       { user: "Ana M.", avatar: "AM", time: "5min atrás", msg: "Chopp gelado e petiscos incríveis hoje! Tá cheio mas vale!", mood: "🔥" },
       { user: "Rafa S.", avatar: "RS", time: "12min atrás", msg: "Sem fila ainda, aproveita!", mood: "✨" },
-    ]
+    ],
   },
   {
     id: 2, name: "Honey Club", type: "club", distance: "1.4km",
     tags: ["eletrônico", "shows", "18+"], rating: 4.1, crowd: 92,
-    vibe: "Packed", music: "House / Pop", cover: "R$40",
-    color: "#A78BFA", lat: -23.193503999999997, lng: -45.890727299999995, checkins: 112,
+    music: "House / Pop", cover: "R$40", color: "#A78BFA",
+    lat: -23.193504, lng: -45.890727, checkins: 112,
     address: "Av. Dr. Ademar de Barros, 152 - Vila Adyana",
     reports: [
       { user: "Bia T.", avatar: "BT", time: "2min atrás", msg: "DJ está arrasando agora 🎧 pista lotada!", mood: "🔥" },
       { user: "Leo R.", avatar: "LR", time: "8min atrás", msg: "Fila ~20min. Dentro tá ótimo!", mood: "⚡" },
       { user: "Julia C.", avatar: "JC", time: "20min atrás", msg: "Melhor noite aqui em meses, estão tocando muito", mood: "🔥" },
-    ]
+    ],
   },
   {
     id: 3, name: "Buteco da Villa", type: "bar", distance: "2.1km",
     tags: ["boteco", "torresmo", "zona leste"], rating: 4.7, crowd: 58,
-    vibe: "Relaxed", music: "Pagode / Samba", cover: "Grátis",
-    color: "#34D399", lat: -23.174844399999998, lng: -45.8541844, checkins: 67,
+    music: "Pagode / Samba", cover: "Grátis", color: "#34D399",
+    lat: -23.174844, lng: -45.854184, checkins: 67,
     address: "Av. Prof. S. P. T. Pontes, 875 - Vila Industrial",
     reports: [
       { user: "Pedro A.", avatar: "PA", time: "15min atrás", msg: "Mesa na calçada disponível, clima perfeito essa noite 🌙", mood: "✨" },
-    ]
+    ],
   },
   {
     id: 4, name: "Buxixo Gastrobar", type: "restaurant", distance: "1.8km",
     tags: ["gastronomia", "cocktails", "vista"], rating: 4.6, crowd: 65,
-    vibe: "Chill", music: "Deep House", cover: "Grátis",
-    color: "#F59E0B", lat: -23.1954347, lng: -45.908351499999995, checkins: 89,
+    music: "Deep House", cover: "Grátis", color: "#F59E0B",
+    lat: -23.195435, lng: -45.908351, checkins: 89,
     address: "Av. Anchieta, 1580 - Jardim Esplanada",
     reports: [
       { user: "Mari F.", avatar: "MF", time: "3min atrás", msg: "Vista incrível hoje, vibes perfeitas 🏙️", mood: "✨" },
       { user: "Caio B.", avatar: "CB", time: "30min atrás", msg: "Ainda não tá lotado, corre pegar lugar!", mood: "⚡" },
-    ]
+    ],
   },
   {
     id: 5, name: "Hangar Gastronomia", type: "restaurant", distance: "2.0km",
     tags: ["temático", "aviação", "família"], rating: 4.8, crowd: 45,
-    vibe: "Relaxed", music: "MPB", cover: "Grátis",
-    color: "#60A5FA", lat: -23.197353099999997, lng: -45.90464610000001, checkins: 41,
+    music: "MPB", cover: "Grátis", color: "#60A5FA",
+    lat: -23.197353, lng: -45.904646, checkins: 41,
     address: "Av. Barão do Rio Branco, 669 - Jd. Esplanada",
     reports: [
       { user: "Dani W.", avatar: "DW", time: "45min atrás", msg: "Tema de avião incrível, comida ótima. Ótimo pra conversar.", mood: "✨" },
-    ]
+    ],
   },
   {
     id: 6, name: "FREAKOUT", type: "club", distance: "1.6km",
     tags: ["rock", "underground", "alternativo"], rating: 3.6, crowd: 88,
-    vibe: "Packed", music: "Rock / Alternativo", cover: "R$25",
-    color: "#F43F5E", lat: -23.1911182, lng: -45.8915233, checkins: 178,
+    music: "Rock / Alternativo", cover: "R$25", color: "#F43F5E",
+    lat: -23.191118, lng: -45.891523, checkins: 178,
     address: "R. Luiz Jacinto, 240 - Centro",
     reports: [
       { user: "Thiago P.", avatar: "TP", time: "1min atrás", msg: "Rock pesado rolando agora 🎸 galera doida!", mood: "🔥" },
       { user: "Flávia N.", avatar: "FN", time: "7min atrás", msg: "Fila tá grande mas tô dentro, valeu a espera!", mood: "⚡" },
-    ]
+    ],
+  },
+];
+
+const EVENTS = [
+  {
+    id: 1, name: "BATUKADA UNIVERSITÁRIA", type: "Universitária",
+    date: "Sáb, 24 Mai", time: "23:00",
+    location: "UNIVAP — Av. Shishima Hifumi, 2911",
+    description: "A maior festa universitária de SJC está de volta! DJs convidados, open bar por 2h e muito agito. Não perde!",
+    lineup: ["DJ Marquinhos", "DJ Letícia Lima", "MC Paulinho"],
+    confirmed: 312, color: "#F472B6",
+    gradient: "linear-gradient(135deg, #F472B6, #A78BFA)",
+    tickets: [{ lote: "1° Lote", price: "R$25", available: true }, { lote: "2° Lote", price: "R$35", available: true }, { lote: "Na porta", price: "R$50", available: true }],
+    ticketLink: "https://sympla.com.br", emoji: "🎓",
+  },
+  {
+    id: 2, name: "HONEY CLUB PRESENTS: OVERLOAD", type: "Eletrônico",
+    date: "Sex, 23 Mai", time: "00:00",
+    location: "Honey Club — Av. Dr. Ademar de Barros, 152",
+    description: "Uma noite de house music com os melhores DJs do circuito paulista. Pista quente, luz estroboscópica e muito bass.",
+    lineup: ["DJ Snake Jr.", "Valentina Cruz", "KVSH"],
+    confirmed: 489, color: "#A78BFA",
+    gradient: "linear-gradient(135deg, #A78BFA, #60A5FA)",
+    tickets: [{ lote: "1° Lote", price: "R$40", available: false }, { lote: "2° Lote", price: "R$55", available: true }, { lote: "VIP", price: "R$120", available: true }],
+    ticketLink: "https://sympla.com.br", emoji: "🎧",
+  },
+  {
+    id: 3, name: "BAILE DO VALE", type: "Funk",
+    date: "Dom, 25 Mai", time: "22:00",
+    location: "Arena Vale — R. dos Expedicionários, 500",
+    description: "O baile que tomou conta do Vale! Funk, pagode e muito suingue. Entrada feminina com desconto até meia noite.",
+    lineup: ["MC Davi", "MC Livinho", "DJ Batutinha"],
+    confirmed: 728, color: "#34D399",
+    gradient: "linear-gradient(135deg, #34D399, #F59E0B)",
+    tickets: [{ lote: "Feminino", price: "R$15", available: true }, { lote: "Masculino", price: "R$30", available: true }, { lote: "Casal", price: "R$40", available: true }],
+    ticketLink: "https://sympla.com.br", emoji: "🎤",
+  },
+  {
+    id: 4, name: "FREAKOUT FEST", type: "Rock",
+    date: "Sáb, 31 Mai", time: "21:00",
+    location: "FREAKOUT — R. Luiz Jacinto, 240",
+    description: "Festival de rock alternativo com 3 bandas ao vivo, praça de alimentação e muito headbanging. A noite mais pesada do ano!",
+    lineup: ["Scalene", "Lagum", "Los Hermanos Cover"],
+    confirmed: 215, color: "#F43F5E",
+    gradient: "linear-gradient(135deg, #F43F5E, #F59E0B)",
+    tickets: [{ lote: "1° Lote", price: "R$35", available: true }, { lote: "2° Lote", price: "R$45", available: true }, { lote: "Na porta", price: "R$60", available: true }],
+    ticketLink: "https://sympla.com.br", emoji: "🎸",
   },
 ];
 
 const VIBES = ["Tranquilo", "Agitado", "Lotado"];
 const TYPES = ["Todos", "bar", "club", "restaurant"];
-const EVENT_TYPES = ["Todos", "Universitária", "Show", "Eletrônico", "Funk", "Rock"];
+const EVENT_TYPES = ["Todos", "Universitária", "Eletrônico", "Funk", "Rock"];
 
-const EVENTS = [
-  { id: 1, name: "BATUKADA UNIVERSITÁRIA", type: "Universitária", date: "Sáb, 24 Mai", time: "23:00", location: "UNIVAP — Av. Shishima Hifumi, 2911", description: "A maior festa universitária de SJC está de volta! DJs convidados, open bar por 2h e muito agito. Não perde!", lineup: ["DJ Marquinhos", "DJ Letícia Lima", "MC Paulinho"], confirmed: 312, color: "#F472B6", gradient: "linear-gradient(135deg, #F472B6, #A78BFA)", tickets: [{ lote: "1° Lote", price: "R$25", available: true }, { lote: "2° Lote", price: "R$35", available: true }, { lote: "Na porta", price: "R$50", available: true }], ticketLink: "https://sympla.com.br", emoji: "🎓" },
-  { id: 2, name: "HONEY CLUB PRESENTS: OVERLOAD", type: "Eletrônico", date: "Sex, 23 Mai", time: "00:00", location: "Honey Club — Av. Dr. Ademar de Barros, 152", description: "Uma noite de house music com os melhores DJs do circuito paulista. Pista quente, luz estroboscópica e muito bass.", lineup: ["DJ Snake Jr.", "Valentina Cruz", "KVSH"], confirmed: 489, color: "#A78BFA", gradient: "linear-gradient(135deg, #A78BFA, #60A5FA)", tickets: [{ lote: "1° Lote", price: "R$40", available: false }, { lote: "2° Lote", price: "R$55", available: true }, { lote: "VIP", price: "R$120", available: true }], ticketLink: "https://sympla.com.br", emoji: "🎧" },
-  { id: 3, name: "BAILE DO VALE", type: "Funk", date: "Dom, 25 Mai", time: "22:00", location: "Arena Vale — R. dos Expedicionários, 500", description: "O baile que tomou conta do Vale! Funk, pagode e muito suingue. Entrada feminina com desconto até meia noite.", lineup: ["MC Davi", "MC Livinho", "DJ Batutinha"], confirmed: 728, color: "#34D399", gradient: "linear-gradient(135deg, #34D399, #F59E0B)", tickets: [{ lote: "Feminino", price: "R$15", available: true }, { lote: "Masculino", price: "R$30", available: true }, { lote: "Casal", price: "R$40", available: true }], ticketLink: "https://sympla.com.br", emoji: "🎤" },
-  { id: 4, name: "FREAKOUT FEST", type: "Rock", date: "Sáb, 31 Mai", time: "21:00", location: "FREAKOUT — R. Luiz Jacinto, 240", description: "Festival de rock alternativo com 3 bandas ao vivo, praça de alimentação e muito headbanging. A noite mais pesada do ano!", lineup: ["Scalene", "Lagum", "Los Hermanos Cover"], confirmed: 215, color: "#F43F5E", gradient: "linear-gradient(135deg, #F43F5E, #F59E0B)", tickets: [{ lote: "1° Lote", price: "R$35", available: true }, { lote: "2° Lote", price: "R$45", available: true }, { lote: "Na porta", price: "R$60", available: true }], ticketLink: "https://sympla.com.br", emoji: "🎸" },
-];
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
 
 const crowdColor = (c) => c >= 90 ? "#EF4444" : c >= 65 ? "#F59E0B" : "#22C55E";
 const crowdLabel = (c) => c >= 90 ? "Lotado" : c >= 65 ? "Agitado" : "Tranquilo";
 const crowdEmoji = (c) => c >= 90 ? "🔴" : c >= 65 ? "🟡" : "🟢";
+const typeLabel = (t) => t === "bar" ? "Bar" : t === "club" ? "Balada" : t === "restaurant" ? "Restaurante" : t;
+
+// ─── COMPONENTS ──────────────────────────────────────────────────────────────
 
 function Avatar({ initials, color }) {
   return (
-    <div style={{ width: 34, height: 34, borderRadius: "50%", background: color + "22", color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, flexShrink: 0, border: `1.5px solid ${color}44` }}>{initials}</div>
+    <div style={{ width: 34, height: 34, borderRadius: "50%", background: color + "22", color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, flexShrink: 0, border: `1.5px solid ${color}44` }}>
+      {initials}
+    </div>
   );
 }
 
@@ -107,7 +156,9 @@ function CrowdBar({ value }) {
 
 function PlaceCard({ place, onClick, isFav, onToggleFav }) {
   return (
-    <div onClick={() => onClick(place)} style={{ background: "#111", border: "1px solid #222", borderRadius: 16, padding: 16, cursor: "pointer", transition: "transform 0.15s, border-color 0.15s", position: "relative", overflow: "hidden" }}
+    <div
+      onClick={() => onClick(place)}
+      style={{ background: "#111", border: "1px solid #222", borderRadius: 16, padding: 16, cursor: "pointer", transition: "transform 0.15s, border-color 0.15s", position: "relative", overflow: "hidden" }}
       onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.borderColor = place.color + "88"; }}
       onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.borderColor = "#222"; }}
     >
@@ -115,13 +166,15 @@ function PlaceCard({ place, onClick, isFav, onToggleFav }) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 2 }}>
-            <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: place.color + "22", color: place.color, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "monospace" }}>{place.type === "bar" ? "Bar" : place.type === "club" ? "Balada" : place.type === "restaurant" ? "Restaurante" : place.type}</span>
+            <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: place.color + "22", color: place.color, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "monospace" }}>{typeLabel(place.type)}</span>
             <span style={{ fontSize: 11, color: "#555" }}>{place.distance}</span>
           </div>
           <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: "#f0f0f0" }}>{place.name}</h3>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0, marginLeft: 8 }}>
-          <button onClick={(e) => { e.stopPropagation(); onToggleFav && onToggleFav(place); }} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 20, padding: 0, lineHeight: 1, transition: "transform 0.2s" }}
+          <button
+            onClick={e => { e.stopPropagation(); onToggleFav?.(place); }}
+            style={{ background: "none", border: "none", cursor: "pointer", fontSize: 20, padding: 0, lineHeight: 1, transition: "transform 0.2s" }}
             onMouseEnter={e => e.currentTarget.style.transform = "scale(1.3)"}
             onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
           >{isFav ? "❤️" : "🤍"}</button>
@@ -132,7 +185,7 @@ function PlaceCard({ place, onClick, isFav, onToggleFav }) {
         </div>
       </div>
       <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 10 }}>
-        {place.tags.map(t => (<span key={t} style={{ fontSize: 11, padding: "2px 8px", borderRadius: 20, background: "#1a1a1a", color: "#888", border: "1px solid #2a2a2a" }}>{t}</span>))}
+        {place.tags.map(t => <span key={t} style={{ fontSize: 11, padding: "2px 8px", borderRadius: 20, background: "#1a1a1a", color: "#888", border: "1px solid #2a2a2a" }}>{t}</span>)}
       </div>
       <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
         <div style={{ flex: 1, background: "#1a1a1a", borderRadius: 10, padding: "8px 10px" }}>
@@ -163,11 +216,15 @@ function PlaceDetail({ place, onClose }) {
   const [newMood, setNewMood] = useState("🔥");
   const [reports, setReports] = useState(place.reports);
   const [sent, setSent] = useState(false);
+
   const submit = () => {
     if (!newReport.trim()) return;
-    setReports([{ user: "Você", avatar: "VC", time: "agora", msg: newReport, mood: newMood }, ...reports]);
-    setNewReport(""); setSent(true); setTimeout(() => setSent(false), 2000);
+    setReports(prev => [{ user: "Você", avatar: "VC", time: "agora", msg: newReport, mood: newMood }, ...prev]);
+    setNewReport("");
+    setSent(true);
+    setTimeout(() => setSent(false), 2000);
   };
+
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 500, display: "flex", alignItems: "flex-end", backdropFilter: "blur(4px)" }} onClick={onClose}>
       <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 480, margin: "0 auto", background: "#0d0d0d", borderRadius: "24px 24px 0 0", border: `1px solid ${place.color}44`, maxHeight: "90vh", overflowY: "auto", padding: "0 0 32px" }}>
@@ -185,7 +242,11 @@ function PlaceDetail({ place, onClose }) {
         </div>
         <div style={{ padding: "16px 20px", borderBottom: "1px solid #1a1a1a" }}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
-            {[{ label: "CHEIO", val: crowdLabel(place.crowd), sub: `${place.crowd}%`, color: crowdColor(place.crowd) }, { label: "MÚSICA", val: place.music, sub: "ao vivo", color: "#A78BFA" }, { label: "ENTRADA", val: place.cover, sub: "cover", color: "#F59E0B" }].map(item => (
+            {[
+              { label: "CHEIO", val: crowdLabel(place.crowd), sub: `${place.crowd}%`, color: crowdColor(place.crowd) },
+              { label: "MÚSICA", val: place.music, sub: "ao vivo", color: "#A78BFA" },
+              { label: "ENTRADA", val: place.cover, sub: "cover", color: "#F59E0B" },
+            ].map(item => (
               <div key={item.label} style={{ background: "#111", borderRadius: 12, padding: "10px 12px", border: `1px solid ${item.color}22` }}>
                 <div style={{ fontSize: 9, color: "#555", marginBottom: 3, fontFamily: "monospace" }}>{item.label}</div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: item.color }}>{item.val}</div>
@@ -219,10 +280,14 @@ function PlaceDetail({ place, onClose }) {
         <div style={{ padding: "16px 20px" }}>
           <h4 style={{ margin: "0 0 10px", fontSize: 13, color: "#888", fontFamily: "monospace", letterSpacing: "0.08em" }}>TÁ LÁ? MANDA O VYBE</h4>
           <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-            {["🔥", "✨", "⚡", "😴", "🎵", "🍺"].map(m => (<button key={m} onClick={() => setNewMood(m)} style={{ fontSize: 18, background: newMood === m ? "#1a1a1a" : "transparent", border: newMood === m ? `1.5px solid ${place.color}66` : "1.5px solid #222", borderRadius: 8, padding: "4px 8px", cursor: "pointer" }}>{m}</button>))}
+            {["🔥", "✨", "⚡", "😴", "🎵", "🍺"].map(m => (
+              <button key={m} onClick={() => setNewMood(m)} style={{ fontSize: 18, background: newMood === m ? "#1a1a1a" : "transparent", border: newMood === m ? `1.5px solid ${place.color}66` : "1.5px solid #222", borderRadius: 8, padding: "4px 8px", cursor: "pointer" }}>{m}</button>
+            ))}
           </div>
           <textarea value={newReport} onChange={e => setNewReport(e.target.value)} placeholder="Como tá aí agora? Fila, música, clima..." style={{ width: "100%", minHeight: 72, background: "#111", border: "1px solid #222", borderRadius: 12, padding: "10px 12px", color: "#ddd", fontSize: 14, resize: "none", boxSizing: "border-box", outline: "none", fontFamily: "inherit" }} />
-          <button onClick={submit} style={{ marginTop: 8, width: "100%", padding: 12, background: sent ? "#1a2e1a" : place.color, color: sent ? "#22C55E" : "#000", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: "pointer", transition: "background 0.3s" }}>{sent ? "✓ Update enviado!" : "📍 Enviar Atualização"}</button>
+          <button onClick={submit} style={{ marginTop: 8, width: "100%", padding: 12, background: sent ? "#1a2e1a" : place.color, color: sent ? "#22C55E" : "#000", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: "pointer", transition: "background 0.3s" }}>
+            {sent ? "✓ Update enviado!" : "📍 Enviar Atualização"}
+          </button>
         </div>
       </div>
       <style>{`@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.4)} }`}</style>
@@ -230,28 +295,34 @@ function PlaceDetail({ place, onClose }) {
   );
 }
 
-function PreferencesModal({ onClose, onApply }) {
-  const [vibePrefs, setVibePrefs] = useState([]);
-  const [typePrefs, setTypePrefs] = useState([]);
-  const [maxCrowd, setMaxCrowd] = useState(100);
+function PreferencesModal({ onClose, onApply, current }) {
+  const [vibePrefs, setVibePrefs] = useState(current?.vibePrefs ?? []);
+  const [typePrefs, setTypePrefs] = useState(current?.typePrefs ?? []);
+  const [maxCrowd, setMaxCrowd] = useState(current?.maxCrowd ?? 100);
   const toggle = (arr, setArr, val) => setArr(arr.includes(val) ? arr.filter(x => x !== val) : [...arr, val]);
+  const hasFilters = vibePrefs.length > 0 || typePrefs.length > 0 || maxCrowd < 100;
+
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 600, display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(4px)", padding: 20 }} onClick={onClose}>
       <div onClick={e => e.stopPropagation()} style={{ background: "#0d0d0d", borderRadius: 20, border: "1px solid #222", padding: 24, width: "100%", maxWidth: 400 }}>
         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20 }}>
-          <h2 style={{ margin: 0, fontSize: 20, color: "#f5f5f5" }}>Meu Vybe</h2>
+          <h2 style={{ margin: 0, fontSize: 20, color: "#f5f5f5" }}>Meu Vybe 🎛️</h2>
           <button onClick={onClose} style={{ background: "none", border: "none", color: "#666", fontSize: 18, cursor: "pointer" }}>✕</button>
         </div>
         <div style={{ marginBottom: 20 }}>
           <div style={{ fontSize: 11, color: "#555", marginBottom: 10, fontFamily: "monospace" }}>CLIMA</div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-            {VIBES.map(v => (<button key={v} onClick={() => toggle(vibePrefs, setVibePrefs, v)} style={{ padding: "6px 14px", borderRadius: 20, background: vibePrefs.includes(v) ? "#A78BFA22" : "#111", color: vibePrefs.includes(v) ? "#A78BFA" : "#666", border: vibePrefs.includes(v) ? "1px solid #A78BFA55" : "1px solid #222", cursor: "pointer", fontSize: 13, fontWeight: 600 }}>{v}</button>))}
+            {VIBES.map(v => (
+              <button key={v} onClick={() => toggle(vibePrefs, setVibePrefs, v)} style={{ padding: "6px 14px", borderRadius: 20, background: vibePrefs.includes(v) ? "#A78BFA22" : "#111", color: vibePrefs.includes(v) ? "#A78BFA" : "#666", border: vibePrefs.includes(v) ? "1px solid #A78BFA55" : "1px solid #222", cursor: "pointer", fontSize: 13, fontWeight: 600 }}>{v}</button>
+            ))}
           </div>
         </div>
         <div style={{ marginBottom: 20 }}>
           <div style={{ fontSize: 11, color: "#555", marginBottom: 10, fontFamily: "monospace" }}>TIPO DE LUGAR</div>
-          <div style={{ display: "flex", gap: 8 }}>
-            {TYPES.slice(1).map(t => (<button key={t} onClick={() => toggle(typePrefs, setTypePrefs, t)} style={{ padding: "6px 14px", borderRadius: 20, background: typePrefs.includes(t) ? "#34D39922" : "#111", color: typePrefs.includes(t) ? "#34D399" : "#666", border: typePrefs.includes(t) ? "1px solid #34D39955" : "1px solid #222", cursor: "pointer", fontSize: 13, fontWeight: 600, textTransform: "capitalize" }}>{t === "bar" ? "Bar" : t === "club" ? "Balada" : "Restaurante"}</button>))}
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {TYPES.slice(1).map(t => (
+              <button key={t} onClick={() => toggle(typePrefs, setTypePrefs, t)} style={{ padding: "6px 14px", borderRadius: 20, background: typePrefs.includes(t) ? "#34D39922" : "#111", color: typePrefs.includes(t) ? "#34D399" : "#666", border: typePrefs.includes(t) ? "1px solid #34D39955" : "1px solid #222", cursor: "pointer", fontSize: 13, fontWeight: 600 }}>{typeLabel(t)}</button>
+            ))}
           </div>
         </div>
         <div style={{ marginBottom: 24 }}>
@@ -260,9 +331,16 @@ function PreferencesModal({ onClose, onApply }) {
             <span style={{ fontSize: 12, fontWeight: 700, color: crowdColor(maxCrowd) }}>{crowdEmoji(maxCrowd)} {maxCrowd}%</span>
           </div>
           <input type="range" min={20} max={100} step={5} value={maxCrowd} onChange={e => setMaxCrowd(+e.target.value)} style={{ width: "100%", accentColor: crowdColor(maxCrowd) }} />
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "#444", marginTop: 2 }}><span>Tranquilo</span><span>Moderado</span><span>Qualquer</span></div>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "#444", marginTop: 2 }}>
+            <span>Tranquilo</span><span>Moderado</span><span>Qualquer</span>
+          </div>
         </div>
-        <button onClick={() => { onApply({ vibePrefs, typePrefs, maxCrowd }); onClose(); }} style={{ width: "100%", padding: 14, background: "#A78BFA", border: "none", borderRadius: 12, color: "#000", fontSize: 15, fontWeight: 800, cursor: "pointer" }}>Aplicar ✓</button>
+        <div style={{ display: "flex", gap: 10 }}>
+          {hasFilters && (
+            <button onClick={() => { onApply(null); onClose(); }} style={{ flex: 1, padding: 14, background: "#111", border: "1px solid #333", borderRadius: 12, color: "#888", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>Limpar</button>
+          )}
+          <button onClick={() => { onApply({ vibePrefs, typePrefs, maxCrowd }); onClose(); }} style={{ flex: 2, padding: 14, background: "#A78BFA", border: "none", borderRadius: 12, color: "#000", fontSize: 15, fontWeight: 800, cursor: "pointer" }}>Aplicar ✓</button>
+        </div>
       </div>
     </div>
   );
@@ -270,7 +348,9 @@ function PreferencesModal({ onClose, onApply }) {
 
 function EventCard({ event, onClick, isFav, onToggleFav }) {
   return (
-    <div onClick={() => onClick(event)} style={{ background: "#111", border: "1px solid #222", borderRadius: 20, overflow: "hidden", cursor: "pointer", transition: "transform 0.15s, border-color 0.15s" }}
+    <div
+      onClick={() => onClick(event)}
+      style={{ background: "#111", border: "1px solid #222", borderRadius: 20, overflow: "hidden", cursor: "pointer", transition: "transform 0.15s, border-color 0.15s" }}
       onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.borderColor = event.color + "88"; }}
       onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.borderColor = "#222"; }}
     >
@@ -287,18 +367,19 @@ function EventCard({ event, onClick, isFav, onToggleFav }) {
           <span style={{ fontSize: 12, color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>📅 {event.date}</span>
           <span style={{ fontSize: 12, color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>🕐 {event.time}</span>
         </div>
-        <button onClick={(e) => { e.stopPropagation(); onToggleFav && onToggleFav(event); }} style={{ position: "absolute", top: 12, right: 12, background: "rgba(0,0,0,0.3)", border: "none", borderRadius: "50%", width: 32, height: 32, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <button onClick={e => { e.stopPropagation(); onToggleFav?.(event); }} style={{ position: "absolute", top: 12, right: 12, background: "rgba(0,0,0,0.3)", border: "none", borderRadius: "50%", width: 32, height: 32, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }}>
           {isFav ? "❤️" : "🤍"}
         </button>
       </div>
       <div style={{ padding: "14px 16px" }}>
         <div style={{ fontSize: 12, color: "#666", marginBottom: 10 }}>📍 {event.location}</div>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
-          {event.lineup.map(a => (<span key={a} style={{ fontSize: 11, padding: "3px 10px", borderRadius: 20, background: event.color + "22", color: event.color, border: `1px solid ${event.color}44`, fontWeight: 600 }}>{a}</span>))}
+          {event.lineup.map(a => <span key={a} style={{ fontSize: 11, padding: "3px 10px", borderRadius: 20, background: event.color + "22", color: event.color, border: `1px solid ${event.color}44`, fontWeight: 600 }}>{a}</span>)}
         </div>
-        <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <span style={{ fontSize: 12, color: "#555" }}>👥 {event.confirmed} confirmados</span>
           <div style={{ background: event.color, color: "#000", fontSize: 12, fontWeight: 800, padding: "6px 16px", borderRadius: 20 }}>
-            A partir de {event.tickets.find(t => t.available)?.price}
+            A partir de {event.tickets.find(t => t.available)?.price ?? "—"}
           </div>
         </div>
       </div>
@@ -321,6 +402,7 @@ function EventDetail({ event, onClose }) {
             <span style={{ fontSize: 13, color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>🕐 {event.time}</span>
           </div>
           <div style={{ fontSize: 12, color: "rgba(255,255,255,0.75)", marginTop: 4 }}>📍 {event.location}</div>
+          <div style={{ fontSize: 13, color: "rgba(255,255,255,0.85)", marginTop: 6, fontWeight: 600 }}>👥 {event.confirmed} confirmados</div>
         </div>
         <div style={{ padding: "16px 20px", borderBottom: "1px solid #1a1a1a" }}>
           <h4 style={{ margin: "0 0 8px", fontSize: 11, color: "#555", fontFamily: "monospace", letterSpacing: "0.08em" }}>SOBRE O EVENTO</h4>
@@ -364,86 +446,158 @@ function HomeMapView({ places, onSelectPlace, onAreaChange }) {
   const mapRef = useRef(null);
   const leafletMapRef = useRef(null);
   const markersRef = useRef([]);
-  const allPlacesRef = useRef(places);
+  const addMarkersRef = useRef(null);
+  const placesRef = useRef(places);
+  const onSelectRef = useRef(onSelectPlace);
+  const onAreaRef = useRef(onAreaChange);
 
-  useEffect(() => { allPlacesRef.current = places; }, [places]);
+  useEffect(() => { onSelectRef.current = onSelectPlace; }, [onSelectPlace]);
+  useEffect(() => { onAreaRef.current = onAreaChange; }, [onAreaChange]);
 
+  // Rebuild markers whenever filtered places change
   useEffect(() => {
-    if (leafletMapRef.current) return;
+    placesRef.current = places;
+    if (!addMarkersRef.current || !leafletMapRef.current) return;
+    addMarkersRef.current(places);
+    const bounds = leafletMapRef.current.getBounds();
+    const visible = places.filter(p => bounds.contains([p.lat, p.lng]));
+    onAreaRef.current(visible.length > 0 ? visible : places);
+  }, [places]);
+
+  // Initialize map once
+  useEffect(() => {
     if (!document.getElementById("leaflet-css")) {
       const link = document.createElement("link");
-      link.id = "leaflet-css"; link.rel = "stylesheet";
+      link.id = "leaflet-css";
+      link.rel = "stylesheet";
       link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
       document.head.appendChild(link);
     }
+    if (!document.getElementById("vybe-map-style")) {
+      const style = document.createElement("style");
+      style.id = "vybe-map-style";
+      style.innerHTML = `
+        .leaflet-container { background: #080808 !important; }
+        .vybe-marker { background: transparent !important; border: none !important; }
+        .vybe-pin-wrap { display:flex; flex-direction:column; align-items:center; cursor:pointer; }
+        .vybe-pin { width:42px; height:42px; border-radius:50% 50% 50% 0; transform:rotate(-45deg); display:flex; align-items:center; justify-content:center; box-shadow:0 6px 18px rgba(0,0,0,0.5); border:2px solid rgba(255,255,255,0.65); }
+        .vybe-pin span { transform:rotate(45deg); font-size:18px; line-height:1; }
+        .vybe-pin-dot { width:7px; height:7px; border-radius:50%; margin-top:2px; opacity:0.75; }
+      `;
+      document.head.appendChild(style);
+    }
+
+    const getEmoji = (type) => type === "bar" ? "🍺" : type === "club" ? "🎵" : type === "restaurant" ? "🍽️" : "📍";
+
     const initMap = () => {
-      if (!window.L || !mapRef.current) return;
-      if (leafletMapRef.current) return;
+      if (!window.L || !mapRef.current || leafletMapRef.current) return;
+      const L = window.L;
       if (mapRef.current._leaflet_id) {
         mapRef.current._leaflet_id = null;
-        try { mapRef.current.innerHTML = ""; } catch(e) {}
+        try { mapRef.current.innerHTML = ""; } catch (e) {}
       }
-      const L = window.L;
+
       const map = L.map(mapRef.current, { center: [-23.1891, -45.8841], zoom: 14, zoomControl: false });
-      L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", { attribution: "© OpenStreetMap © CARTO", subdomains: "abcd", maxZoom: 19 }).addTo(map);
+
+      // Dark tile layer (Carto Dark Matter)
+      L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        maxZoom: 19,
+      }).addTo(map);
+
       L.control.zoom({ position: "bottomright" }).addTo(map);
-      const userIcon = L.divIcon({ html: `<div style="width:14px;height:14px;background:#60A5FA;border:2.5px solid #fff;border-radius:50%;box-shadow:0 0 0 5px rgba(96,165,250,0.25)"></div>`, className: "", iconSize: [14, 14], iconAnchor: [7, 7] });
-      L.marker([-23.1860, -45.8870], { icon: userIcon }).addTo(map).bindPopup("<b>Você está aqui</b>");
-      const addMarkers = (placeList) => {
-        markersRef.current.forEach(m => m.remove()); markersRef.current = [];
-        placeList.forEach(place => {
-          const typeEmoji = place.type === "bar" ? "🍺" : place.type === "club" ? "🎵" : "🍽️";
+
+      L.marker([-23.1860, -45.8870], {
+        icon: L.divIcon({
+          html: `<div style="width:16px;height:16px;background:#60A5FA;border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 6px rgba(96,165,250,0.25);"></div>`,
+          className: "vybe-marker", iconSize: [16, 16], iconAnchor: [8, 8],
+        }),
+      }).addTo(map).bindPopup("<b>Você está aqui</b>");
+
+      const addMarkers = (list) => {
+        markersRef.current.forEach(m => m.remove());
+        markersRef.current = [];
+        list.forEach(place => {
+          if (typeof place.lat !== "number" || typeof place.lng !== "number" || isNaN(place.lat) || isNaN(place.lng)) return;
           const icon = L.divIcon({
-            html: `<div style="display:flex;flex-direction:column;align-items:center;cursor:pointer;"><div style="width:38px;height:38px;background:${place.color};border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 3px 14px ${place.color}99;border:2px solid rgba(255,255,255,0.3);"><span style="transform:rotate(45deg);font-size:16px;line-height:1">${typeEmoji}</span></div><div style="width:6px;height:6px;background:${place.color};border-radius:50%;margin-top:1px;opacity:0.5;"></div></div>`,
-            className: "", iconSize: [38, 48], iconAnchor: [19, 48]
+            html: `<div class="vybe-pin-wrap"><div class="vybe-pin" style="background:${place.color};"><span>${getEmoji(place.type)}</span></div><div class="vybe-pin-dot" style="background:${place.color};"></div></div>`,
+            className: "vybe-marker", iconSize: [48, 58], iconAnchor: [24, 58], popupAnchor: [0, -52],
           });
-          const marker = L.marker([place.lat, place.lng], { icon }).addTo(map).on("click", () => onSelectPlace(place));
+          const marker = L.marker([place.lat, place.lng], { icon })
+            .addTo(map)
+            .on("click", () => onSelectRef.current(place));
           markersRef.current.push(marker);
         });
       };
-      addMarkers(places);
-      const updateVisiblePlaces = () => {
+
+      addMarkersRef.current = addMarkers;
+      addMarkers(placesRef.current);
+
+      const updateVisible = () => {
         const bounds = map.getBounds();
-        const visible = allPlacesRef.current.filter(p => bounds.contains([p.lat, p.lng]));
-        onAreaChange(visible.length > 0 ? visible : allPlacesRef.current);
+        const visible = placesRef.current.filter(p => bounds.contains([p.lat, p.lng]));
+        onAreaRef.current(visible.length > 0 ? visible : placesRef.current);
       };
-      map.on("moveend", updateVisiblePlaces);
-      map.on("zoomend", updateVisiblePlaces);
+
+      map.on("moveend", updateVisible);
+      map.on("zoomend", updateVisible);
       leafletMapRef.current = map;
-      setTimeout(() => map.invalidateSize(), 100);
+      setTimeout(() => { map.invalidateSize(); updateVisible(); }, 250);
     };
-    if (window.L) { initMap(); } else {
-      const script = document.createElement("script");
-      script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
-      script.onload = initMap; document.head.appendChild(script);
+
+    if (window.L) {
+      initMap();
+    } else {
+      const existing = document.querySelector('script[src*="leaflet@1.9.4"]');
+      if (existing) {
+        existing.addEventListener("load", initMap);
+      } else {
+        const script = document.createElement("script");
+        script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+        script.onload = initMap;
+        document.head.appendChild(script);
+      }
     }
+
     return () => {
-      if (leafletMapRef.current) { leafletMapRef.current.remove(); leafletMapRef.current = null; markersRef.current = []; }
+      if (leafletMapRef.current) {
+        leafletMapRef.current.remove();
+        leafletMapRef.current = null;
+        markersRef.current = [];
+        addMarkersRef.current = null;
+      }
     };
   }, []);
 
-  return <div ref={mapRef} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />;
+  return <div ref={mapRef} style={{ position: "absolute", inset: 0, background: "#080808" }} />;
 }
 
-function LoginScreen({ onLogin, onGuest }) {
+function LoginScreen({ onGuest }) {
   const [loading, setLoading] = useState(false);
+
   const handleGoogle = async () => {
     setLoading(true);
-    const { error } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin } });
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: window.location.origin },
+    });
     if (error) { alert("Erro: " + error.message); setLoading(false); }
   };
+
   return (
-    <div style={{ height: "100vh", background: "#080808", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 28px", fontFamily: "system-ui, -apple-system, sans-serif", position: "relative", overflow: "hidden" }}>
+    <div style={{ height: "100%", background: "#080808", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 28px", fontFamily: "system-ui, -apple-system, sans-serif", position: "relative", overflow: "hidden" }}>
       <div style={{ position: "absolute", top: "10%", left: "20%", width: 200, height: 200, borderRadius: "50%", background: "#A78BFA", opacity: 0.08, filter: "blur(60px)", pointerEvents: "none" }} />
       <div style={{ position: "absolute", bottom: "20%", right: "10%", width: 250, height: 250, borderRadius: "50%", background: "#F472B6", opacity: 0.08, filter: "blur(80px)", pointerEvents: "none" }} />
-      <div style={{ textAlign: "center", marginBottom: 48, padding: "0 8px" }}>
+      <div style={{ textAlign: "center", marginBottom: 48 }}>
         <h1 style={{ margin: "0 0 8px", fontSize: 56, fontWeight: 900, background: "linear-gradient(90deg, #A78BFA, #F472B6, #FF6B6B)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", letterSpacing: "-2px", lineHeight: 1.2, paddingBottom: 4 }}>vybe.</h1>
         <p style={{ margin: 0, fontSize: 15, color: "#666", fontWeight: 500 }}>Descubra o que tá rolando perto de você</p>
       </div>
       <div style={{ width: "100%", maxWidth: 340, display: "flex", flexDirection: "column", gap: 12 }}>
-        <button onClick={handleGoogle} disabled={loading} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, padding: "14px 20px", background: "#fff", border: "none", borderRadius: 14, cursor: loading ? "not-allowed" : "pointer", fontSize: 15, fontWeight: 700, color: "#111", opacity: loading ? 0.7 : 1 }}
-          onMouseEnter={e => e.currentTarget.style.transform = "translateY(-1px)"}
-          onMouseLeave={e => e.currentTarget.style.transform = ""}
+        <button
+          onClick={handleGoogle} disabled={loading}
+          style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, padding: "14px 20px", background: "#fff", border: "none", borderRadius: 14, cursor: loading ? "not-allowed" : "pointer", fontSize: 15, fontWeight: 700, color: "#111", opacity: loading ? 0.7 : 1, transition: "transform 0.15s" }}
+          onMouseEnter={e => !loading && (e.currentTarget.style.transform = "translateY(-1px)")}
+          onMouseLeave={e => (e.currentTarget.style.transform = "")}
         >
           <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
           {loading ? "Entrando..." : "Continuar com Google"}
@@ -457,7 +611,9 @@ function LoginScreen({ onLogin, onGuest }) {
           Continuar com Apple
           <span style={{ fontSize: 10, background: "rgba(255,255,255,0.1)", padding: "2px 7px", borderRadius: 20 }}>em breve</span>
         </button>
-        <button onClick={onGuest} style={{ marginTop: 8, padding: "12px 20px", background: "transparent", border: "1px solid #222", borderRadius: 14, cursor: "pointer", fontSize: 14, fontWeight: 600, color: "#666" }}
+        <button
+          onClick={onGuest}
+          style={{ marginTop: 8, padding: "12px 20px", background: "transparent", border: "1px solid #222", borderRadius: 14, cursor: "pointer", fontSize: 14, fontWeight: 600, color: "#666" }}
           onMouseEnter={e => { e.currentTarget.style.color = "#aaa"; e.currentTarget.style.borderColor = "#444"; }}
           onMouseLeave={e => { e.currentTarget.style.color = "#666"; e.currentTarget.style.borderColor = "#222"; }}
         >Explorar sem conta →</button>
@@ -468,16 +624,19 @@ function LoginScreen({ onLogin, onGuest }) {
 }
 
 function ProfileScreen({ user, onClose, favPlaces, favEvents, onLogout }) {
-  const name = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split("@")[0] || "Usuário";
-  const email = user?.email || "";
+  const name = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split("@")[0] || "Convidado";
+  const email = user?.email || "Modo convidado";
   const avatar = user?.user_metadata?.avatar_url;
+
   return (
     <div style={{ position: "fixed", inset: 0, background: "#080808", zIndex: 700, display: "flex", flexDirection: "column", fontFamily: "system-ui, -apple-system, sans-serif", overflowY: "auto" }}>
       <div style={{ background: "linear-gradient(135deg, #A78BFA, #F472B6)", padding: "60px 20px 70px", position: "relative" }}>
         <button onClick={onClose} style={{ position: "absolute", top: 20, right: 20, background: "rgba(0,0,0,0.3)", border: "none", color: "#fff", width: 36, height: 36, borderRadius: "50%", cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
           <div style={{ width: 80, height: 80, borderRadius: "50%", overflow: "hidden", border: "3px solid #fff", marginBottom: 12 }}>
-            {avatar ? <img src={avatar} alt="perfil" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (
+            {avatar ? (
+              <img src={avatar} alt="perfil" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            ) : (
               <div style={{ width: "100%", height: "100%", background: "rgba(0,0,0,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <svg viewBox="0 0 24 24" width="48" height="48" fill="none"><circle cx="12" cy="8" r="4" fill="rgba(255,255,255,0.9)"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" fill="rgba(255,255,255,0.9)"/></svg>
               </div>
@@ -503,7 +662,10 @@ function ProfileScreen({ user, onClose, favPlaces, favEvents, onLogout }) {
           {[{ icon: "❤️", title: "Lugares salvos", sub: `${favPlaces.length} lugares`, border: true }, { icon: "🎉", title: "Festas salvas", sub: `${favEvents.length} festas`, border: false }].map((item, i) => (
             <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", borderBottom: item.border ? "1px solid #1a1a1a" : "none" }}>
               <span style={{ fontSize: 20 }}>{item.icon}</span>
-              <div style={{ flex: 1 }}><div style={{ fontSize: 14, fontWeight: 600, color: "#f0f0f0" }}>{item.title}</div><div style={{ fontSize: 11, color: "#555" }}>{item.sub}</div></div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: "#f0f0f0" }}>{item.title}</div>
+                <div style={{ fontSize: 11, color: "#555" }}>{item.sub}</div>
+              </div>
               <span style={{ fontSize: 16, color: "#444" }}>›</span>
             </div>
           ))}
@@ -513,26 +675,40 @@ function ProfileScreen({ user, onClose, favPlaces, favEvents, onLogout }) {
           {[{ icon: "🏆", title: "Badges e conquistas", sub: "Desbloqueie recompensas" }, { icon: "👥", title: "Amigos", sub: "Veja onde seus amigos estão" }, { icon: "📍", title: "Histórico de visitas", sub: "Lugares que você foi" }].map((item, i) => (
             <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", borderBottom: i < 2 ? "1px solid #1a1a1a" : "none" }}>
               <span style={{ fontSize: 20 }}>{item.icon}</span>
-              <div style={{ flex: 1 }}><div style={{ fontSize: 14, fontWeight: 600, color: "#f0f0f0" }}>{item.title}</div><div style={{ fontSize: 11, color: "#555" }}>{item.sub}</div></div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: "#f0f0f0" }}>{item.title}</div>
+                <div style={{ fontSize: 11, color: "#555" }}>{item.sub}</div>
+              </div>
               <span style={{ fontSize: 10, background: "#222", color: "#555", padding: "2px 8px", borderRadius: 20 }}>em breve</span>
             </div>
           ))}
         </div>
-        <button onClick={onLogout} style={{ marginTop: 8, padding: 16, background: "#1a0a0a", border: "1px solid #EF444433", borderRadius: 14, color: "#EF4444", fontSize: 14, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>🚪 Sair da conta</button>
+        <button onClick={onLogout} style={{ marginTop: 8, padding: 16, background: "#1a0a0a", border: "1px solid #EF444433", borderRadius: 14, color: "#EF4444", fontSize: 14, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+          🚪 Sair da conta
+        </button>
         <div style={{ textAlign: "center", fontSize: 11, color: "#333", marginTop: 8 }}>vybe. v1.0 · São José dos Campos</div>
       </div>
     </div>
   );
 }
 
+// ─── APP ─────────────────────────────────────────────────────────────────────
+
+const TABS = [
+  { id: "home", icon: "🌐", label: "Início" },
+  { id: "festas", icon: "🎉", label: "Festas" },
+  { id: "live", icon: "🔴", label: "Ao Vivo" },
+  { id: "saved", icon: "♡", label: "Salvos" },
+];
+
 export default function App() {
   const [user, setUser] = useState(undefined);
   const [guest, setGuest] = useState(false);
-  const [showProfile, setShowProfile] = useState(false);
   const [tab, setTab] = useState("home");
   const [selected, setSelected] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [showPrefs, setShowPrefs] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   const [prefs, setPrefs] = useState(null);
   const [filterEventType, setFilterEventType] = useState("Todos");
   const [events, setEvents] = useState(EVENTS);
@@ -542,57 +718,94 @@ export default function App() {
   const [favEvents, setFavEvents] = useState([]);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => { setUser(session?.user ?? null); });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => { setUser(session?.user ?? null); });
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
     return () => subscription.unsubscribe();
   }, []);
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setUser(null); setGuest(false); setShowProfile(false); setFavPlaces([]); setFavEvents([]);
-  };
-
-  const toggleFavPlace = (place) => setFavPlaces(prev => prev.some(p => p.id === place.id) ? prev.filter(p => p.id !== place.id) : [...prev, place]);
-  const toggleFavEvent = (event) => setFavEvents(prev => prev.some(e => e.id === event.id) ? prev.filter(e => e.id !== event.id) : [...prev, event]);
 
   useEffect(() => {
     const fetchEvents = async () => {
       setLoadingEvents(true);
       const { data, error } = await supabase.from("events").select("*").order("created_at", { ascending: false });
-      if (error || !data || data.length === 0) { setEvents(EVENTS); }
-      else { setEvents(data.map(e => ({ id: e.id, name: e.name, type: e.type, date: e.date, time: e.time, location: e.location, address: e.address, description: e.description, lineup: e.lineup || [], color: e.color || "#A78BFA", gradient: e.gradient || `linear-gradient(135deg, ${e.color || "#A78BFA"}, #60A5FA)`, emoji: e.emoji || "🎉", tickets: e.tickets || [], ticketLink: e.ticket_link || "#" }))); }
+      if (!error && data?.length > 0) {
+        setEvents(data.map(e => ({
+          id: e.id, name: e.name, type: e.type, date: e.date, time: e.time,
+          location: e.location, description: e.description,
+          lineup: e.lineup || [], confirmed: e.confirmed || 0,
+          color: e.color || "#A78BFA",
+          gradient: e.gradient || `linear-gradient(135deg, ${e.color || "#A78BFA"}, #60A5FA)`,
+          emoji: e.emoji || "🎉", tickets: e.tickets || [],
+          ticketLink: e.ticket_link || "#",
+        })));
+      } else {
+        setEvents(EVENTS);
+      }
       setLoadingEvents(false);
     };
     fetchEvents();
   }, []);
 
-  const filteredEvents = events.filter(e => filterEventType === "Todos" || e.type === filterEventType);
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setUser(null); setGuest(false); setShowProfile(false);
+    setFavPlaces([]); setFavEvents([]);
+  };
+
+  const toggleFavPlace = (place) =>
+    setFavPlaces(prev => prev.some(p => p.id === place.id) ? prev.filter(p => p.id !== place.id) : [...prev, place]);
+
+  const toggleFavEvent = (event) =>
+    setFavEvents(prev => prev.some(e => e.id === event.id) ? prev.filter(e => e.id !== event.id) : [...prev, event]);
+
+  const placesToShow = useMemo(() => {
+    if (!prefs) return PLACES;
+    return PLACES.filter(p => {
+      if (prefs.typePrefs.length > 0 && !prefs.typePrefs.includes(p.type)) return false;
+      if (prefs.vibePrefs.length > 0 && !prefs.vibePrefs.includes(crowdLabel(p.crowd))) return false;
+      if (p.crowd > prefs.maxCrowd) return false;
+      return true;
+    });
+  }, [prefs]);
+
+  const filteredEvents = useMemo(
+    () => events.filter(e => filterEventType === "Todos" || e.type === filterEventType),
+    [events, filterEventType]
+  );
 
   if (user === undefined) {
     return (
-      <div style={{ height: "100vh", background: "#080808", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "system-ui" }}>
+      <div style={{ height: "100%", background: "#080808", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div style={{ fontSize: 32, fontWeight: 900, background: "linear-gradient(90deg, #A78BFA, #F472B6, #FF6B6B)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>vybe.</div>
       </div>
     );
   }
 
   if (user === null && !guest) {
-    return <LoginScreen onLogin={() => {}} onGuest={() => setGuest(true)} />;
+    return <LoginScreen onGuest={() => setGuest(true)} />;
   }
 
   return (
-    <div style={{ height: "100vh", background: "#080808", color: "#f5f5f5", maxWidth: 480, margin: "0 auto", position: "relative", fontFamily: "system-ui, -apple-system, sans-serif", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+    <div style={{ height: "100%", background: "#080808", color: "#f5f5f5", maxWidth: 480, margin: "0 auto", position: "relative", fontFamily: "system-ui, -apple-system, sans-serif", display: "flex", flexDirection: "column", overflow: "hidden" }}>
 
+      {/* HOME */}
       {tab === "home" && (
         <div style={{ flex: 1, position: "relative", minHeight: 0, overflow: "hidden" }}>
           <div style={{ position: "absolute", inset: 0, zIndex: 1 }}>
-            <HomeMapView places={areaPlaces} onSelectPlace={setSelected} onAreaChange={setAreaPlaces} />
+            <HomeMapView places={placesToShow} onSelectPlace={setSelected} onAreaChange={setAreaPlaces} />
           </div>
           <div style={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 200, padding: "20px 16px 12px", background: "linear-gradient(180deg, rgba(8,8,8,0.95) 60%, transparent)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
               <h1 style={{ margin: 0, fontSize: 26, fontWeight: 900, background: "linear-gradient(90deg, #A78BFA, #F472B6, #FF6B6B)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>vybe.</h1>
               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                 <div style={{ background: "rgba(0,0,0,0.8)", border: "1px solid #333", borderRadius: 20, padding: "5px 12px", fontSize: 11, color: "#aaa" }}>📍 SJC, SP</div>
+                <button
+                  onClick={() => setShowPrefs(true)}
+                  style={{ background: "rgba(0,0,0,0.8)", border: `1px solid ${prefs ? "#A78BFA88" : "#333"}`, borderRadius: 20, padding: "5px 10px", fontSize: 13, cursor: "pointer", color: prefs ? "#A78BFA" : "#aaa", lineHeight: 1 }}
+                >🎛️</button>
                 <div onClick={() => setShowProfile(true)} style={{ width: 34, height: 34, borderRadius: "50%", overflow: "hidden", cursor: "pointer", border: "2px solid #A78BFA44", flexShrink: 0 }}>
                   {user?.user_metadata?.avatar_url ? (
                     <img src={user.user_metadata.avatar_url} alt="perfil" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -606,19 +819,25 @@ export default function App() {
             </div>
             <div style={{ display: "flex", gap: 6, overflowX: "auto", scrollbarWidth: "none" }}>
               {TYPES.map(t => (
-                <button key={t} onClick={() => { setAreaPlaces(t === "Todos" ? PLACES : PLACES.filter(p => p.type === t)); }} style={{ flexShrink: 0, padding: "5px 12px", borderRadius: 20, background: "rgba(0,0,0,0.8)", color: "#aaa", border: "1px solid #333", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>{t === "bar" ? "Bar" : t === "club" ? "Balada" : t === "restaurant" ? "Restaurante" : t}</button>
+                <button key={t} onClick={() => setAreaPlaces(t === "Todos" ? placesToShow : placesToShow.filter(p => p.type === t))} style={{ flexShrink: 0, padding: "5px 12px", borderRadius: 20, background: "rgba(0,0,0,0.8)", color: "#aaa", border: "1px solid #333", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>
+                  {t === "Todos" ? "Todos" : typeLabel(t)}
+                </button>
               ))}
             </div>
           </div>
           <div style={{ position: "absolute", bottom: 80, left: 0, right: 0, zIndex: 200 }}>
             <div style={{ padding: "0 0 8px 16px", display: "flex", gap: 10, overflowX: "auto", scrollbarWidth: "none" }}>
               {areaPlaces.map(place => (
-                <div key={place.id} onClick={() => setSelected(place)} style={{ flexShrink: 0, width: 180, background: "rgba(10,10,10,0.95)", border: `1px solid ${place.color}55`, borderRadius: 16, padding: "12px 14px", cursor: "pointer", transition: "transform 0.15s" }}
+                <div
+                  key={place.id} onClick={() => setSelected(place)}
+                  style={{ flexShrink: 0, width: 180, background: "rgba(10,10,10,0.95)", border: `1px solid ${place.color}55`, borderRadius: 16, padding: "12px 14px", cursor: "pointer", transition: "transform 0.15s" }}
                   onMouseEnter={e => e.currentTarget.style.transform = "translateY(-3px)"}
                   onMouseLeave={e => e.currentTarget.style.transform = ""}
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
-                    <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 20, background: place.color + "22", color: place.color, textTransform: "uppercase", fontFamily: "monospace" }}>{place.type === "bar" ? "Bar" : place.type === "club" ? "Balada" : "Rest."}</span>
+                    <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 20, background: place.color + "22", color: place.color, textTransform: "uppercase", fontFamily: "monospace" }}>
+                      {place.type === "bar" ? "Bar" : place.type === "club" ? "Balada" : "Rest."}
+                    </span>
                     <span style={{ fontSize: 11, fontWeight: 700, color: "#f0f0f0" }}>⭐ {place.rating}</span>
                   </div>
                   <div style={{ fontSize: 13, fontWeight: 800, color: "#f0f0f0", marginBottom: 3 }}>{place.name}</div>
@@ -634,27 +853,37 @@ export default function App() {
         </div>
       )}
 
+      {/* FESTAS */}
       {tab === "festas" && (
         <div style={{ flex: 1, overflow: "auto" }}>
           <div style={{ padding: "20px 16px 0", background: "#080808" }}>
             <h2 style={{ margin: "0 0 2px", fontSize: 24, fontWeight: 800, color: "#f5f5f5" }}>Festas & Shows 🎉</h2>
             <p style={{ margin: "0 0 14px", fontSize: 13, color: "#555" }}>Eventos próximos em São José dos Campos</p>
             <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 8, scrollbarWidth: "none" }}>
-              {EVENT_TYPES.map(t => (<button key={t} onClick={() => setFilterEventType(t)} style={{ flexShrink: 0, padding: "5px 14px", borderRadius: 20, background: filterEventType === t ? "#f5f5f5" : "#111", color: filterEventType === t ? "#080808" : "#666", border: filterEventType === t ? "none" : "1px solid #222", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>{t}</button>))}
+              {EVENT_TYPES.map(t => (
+                <button key={t} onClick={() => setFilterEventType(t)} style={{ flexShrink: 0, padding: "5px 14px", borderRadius: 20, background: filterEventType === t ? "#f5f5f5" : "#111", color: filterEventType === t ? "#080808" : "#666", border: filterEventType === t ? "none" : "1px solid #222", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>{t}</button>
+              ))}
             </div>
           </div>
           <div style={{ padding: "12px 16px 100px", display: "flex", flexDirection: "column", gap: 14 }}>
             {loadingEvents ? (
-              <div style={{ textAlign: "center", padding: "60px 20px", color: "#555" }}><div style={{ fontSize: 40, marginBottom: 12 }}>⏳</div><div style={{ fontSize: 16, fontWeight: 600 }}>Carregando eventos...</div></div>
+              <div style={{ textAlign: "center", padding: "60px 20px", color: "#555" }}>
+                <div style={{ fontSize: 40, marginBottom: 12 }}>⏳</div>
+                <div style={{ fontSize: 16, fontWeight: 600 }}>Carregando eventos...</div>
+              </div>
             ) : filteredEvents.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "60px 20px", color: "#555" }}><div style={{ fontSize: 40, marginBottom: 12 }}>🎉</div><div style={{ fontSize: 16, fontWeight: 600 }}>Nenhum evento nessa categoria</div></div>
-            ) : (
-              filteredEvents.map(event => (<EventCard key={event.id} event={event} onClick={setSelectedEvent} isFav={favEvents.some(e => e.id === event.id)} onToggleFav={toggleFavEvent} />))
-            )}
+              <div style={{ textAlign: "center", padding: "60px 20px", color: "#555" }}>
+                <div style={{ fontSize: 40, marginBottom: 12 }}>🎉</div>
+                <div style={{ fontSize: 16, fontWeight: 600 }}>Nenhum evento nessa categoria</div>
+              </div>
+            ) : filteredEvents.map(event => (
+              <EventCard key={event.id} event={event} onClick={setSelectedEvent} isFav={favEvents.some(e => e.id === event.id)} onToggleFav={toggleFavEvent} />
+            ))}
           </div>
         </div>
       )}
 
+      {/* AO VIVO */}
       {tab === "live" && (
         <div style={{ flex: 1, overflow: "auto", padding: "20px 16px 100px" }}>
           <h2 style={{ margin: "0 0 4px", fontSize: 22, fontWeight: 800, color: "#f5f5f5" }}>Ao Vivo 🔴</h2>
@@ -681,6 +910,7 @@ export default function App() {
         </div>
       )}
 
+      {/* SALVOS */}
       {tab === "saved" && (
         <div style={{ flex: 1, overflow: "auto", padding: "20px 16px 100px" }}>
           <h2 style={{ margin: "0 0 20px", fontSize: 24, fontWeight: 800, color: "#f5f5f5" }}>Salvos ❤️</h2>
@@ -694,7 +924,7 @@ export default function App() {
               </div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                {favPlaces.map(place => (<PlaceCard key={place.id} place={place} onClick={setSelected} isFav={true} onToggleFav={toggleFavPlace} />))}
+                {favPlaces.map(place => <PlaceCard key={place.id} place={place} onClick={setSelected} isFav={true} onToggleFav={toggleFavPlace} />)}
               </div>
             )}
           </div>
@@ -708,17 +938,18 @@ export default function App() {
               </div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                {favEvents.map(event => (<EventCard key={event.id} event={event} onClick={setSelectedEvent} isFav={true} onToggleFav={toggleFavEvent} />))}
+                {favEvents.map(event => <EventCard key={event.id} event={event} onClick={setSelectedEvent} isFav={true} onToggleFav={toggleFavEvent} />)}
               </div>
             )}
           </div>
         </div>
       )}
 
+      {/* NAV BAR */}
       <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "linear-gradient(0deg, #080808 60%, transparent)", padding: "16px 20px 24px", zIndex: 400 }}>
         <div style={{ display: "flex", background: "#111", border: "1px solid #1e1e1e", borderRadius: 16, padding: 4, gap: 4 }}>
-          {[{ id: "home", icon: "🌐", label: "Início" }, { id: "festas", icon: "🎉", label: "Festas" }, { id: "live", icon: "🔴", label: "Ao Vivo" }, { id: "saved", icon: "♡", label: "Salvos" }].map(t => (
-            <button key={t.id} onClick={() => setTab(t.id)} style={{ flex: 1, padding: "8px 0", background: tab === t.id ? "#1e1e1e" : "transparent", border: "none", borderRadius: 12, cursor: "pointer", color: tab === t.id ? "#f5f5f5" : "#555", fontSize: 11, fontWeight: 600, position: "relative", zIndex: 400 }}>
+          {TABS.map(t => (
+            <button key={t.id} onClick={() => setTab(t.id)} style={{ flex: 1, padding: "8px 0", background: tab === t.id ? "#1e1e1e" : "transparent", border: "none", borderRadius: 12, cursor: "pointer", color: tab === t.id ? "#f5f5f5" : "#555", fontSize: 11, fontWeight: 600 }}>
               <div style={{ fontSize: 16, marginBottom: 1 }}>{t.icon}</div>
               {t.label}
             </button>
@@ -726,9 +957,10 @@ export default function App() {
         </div>
       </div>
 
+      {/* MODALS */}
       {selected && <PlaceDetail place={selected} onClose={() => setSelected(null)} />}
       {selectedEvent && <EventDetail event={selectedEvent} onClose={() => setSelectedEvent(null)} />}
-      {showPrefs && <PreferencesModal onClose={() => setShowPrefs(false)} onApply={setPrefs} />}
+      {showPrefs && <PreferencesModal current={prefs} onClose={() => setShowPrefs(false)} onApply={setPrefs} />}
       {showProfile && <ProfileScreen user={user} onClose={() => setShowProfile(false)} favPlaces={favPlaces} favEvents={favEvents} onLogout={handleLogout} />}
     </div>
   );
