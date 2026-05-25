@@ -740,6 +740,7 @@ export default function App() {
   const [events, setEvents] = useState(EVENTS);
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [areaPlaces, setAreaPlaces] = useState(PLACES);
+  const [dbPlaces, setDbPlaces] = useState(PLACES);
   const [favPlaces, setFavPlaces] = useState([]);
   const [favEvents, setFavEvents] = useState([]);
   const [userLocation, setUserLocation] = useState(null);
@@ -799,6 +800,35 @@ export default function App() {
     fetchEvents();
   }, []);
 
+  // Busca lugares do Supabase
+  useEffect(() => {
+    const fetchPlaces = async () => {
+      const { data, error } = await supabase.from("places").select("*");
+      if (!error && data?.length > 0) {
+        const formatted = data.map(p => ({
+          id: p.id,
+          name: p.name,
+          type: p.type,
+          distance: p.distance || "",
+          tags: p.tags || [],
+          rating: p.rating || 0,
+          crowd: p.crowd || 0,
+          music: p.music || "",
+          cover: p.cover || "Consultar",
+          color: p.color || "#A78BFA",
+          lat: p.lat,
+          lng: p.lng,
+          checkins: p.checkins || 0,
+          address: p.address || "",
+          reports: p.reports || [],
+        }));
+        setDbPlaces(formatted);
+        setAreaPlaces(formatted);
+      }
+    };
+    fetchPlaces();
+  }, []);
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setUser(null); setGuest(false); setShowProfile(false);
@@ -812,8 +842,8 @@ export default function App() {
     setFavEvents(prev => prev.some(e => e.id === event.id) ? prev.filter(e => e.id !== event.id) : [...prev, event]);
 
   const placesToShow = useMemo(() => {
-    if (!prefs) return PLACES;
-    return PLACES.filter(p => {
+    if (!prefs) return dbPlaces;
+    return dbPlaces.filter(p => {
       if (prefs.typePrefs.length > 0 && !prefs.typePrefs.includes(p.type)) return false;
       if (prefs.vibePrefs.length > 0 && !prefs.vibePrefs.includes(crowdLabel(p.crowd))) return false;
       if (p.crowd > prefs.maxCrowd) return false;
@@ -943,7 +973,7 @@ export default function App() {
           <h2 style={{ margin: "0 0 4px", fontSize: 22, fontWeight: 800, color: "#f5f5f5" }}>Ao Vivo 🔴</h2>
           <p style={{ margin: "0 0 20px", fontSize: 13, color: "#555" }}>Updates em tempo real de quem está lá agora</p>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {PLACES.flatMap(p => p.reports.map(r => ({ ...r, place: p }))).map((r, i) => (
+            {dbPlaces.flatMap(p => p.reports.map(r => ({ ...r, place: p }))).map((r, i) => (
               <div key={i} onClick={() => setSelected(r.place)} style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 14, padding: "12px 14px", cursor: "pointer", borderLeft: `3px solid ${r.place.color}` }}>
                 <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
                   <Avatar initials={r.avatar} color={r.place.color} />
