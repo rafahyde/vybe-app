@@ -442,10 +442,13 @@ function EventDetail({ event, onClose }) {
   );
 }
 
-function HomeMapView({ places, onSelectPlace, onAreaChange }) {
+// ─── HOME MAP VIEW (com localização real) ────────────────────────────────────
+
+function HomeMapView({ places, onSelectPlace, onAreaChange, userLocation }) {
   const mapRef = useRef(null);
   const leafletMapRef = useRef(null);
   const markersRef = useRef([]);
+  const userMarkerRef = useRef(null);
   const addMarkersRef = useRef(null);
   const placesRef = useRef(places);
   const onSelectRef = useRef(onSelectPlace);
@@ -454,7 +457,36 @@ function HomeMapView({ places, onSelectPlace, onAreaChange }) {
   useEffect(() => { onSelectRef.current = onSelectPlace; }, [onSelectPlace]);
   useEffect(() => { onAreaRef.current = onAreaChange; }, [onAreaChange]);
 
-  // Rebuild markers whenever filtered places change
+  // Atualiza marcador do usuário quando localização muda
+  useEffect(() => {
+    if (!leafletMapRef.current || !window.L || !userLocation) return;
+    const L = window.L;
+    const { lat, lng } = userLocation;
+
+    if (userMarkerRef.current) {
+      userMarkerRef.current.setLatLng([lat, lng]);
+    } else {
+      const icon = L.divIcon({
+        html: `<div style="position:relative;width:20px;height:20px;">
+          <div style="position:absolute;inset:0;background:#60A5FA;border-radius:50%;opacity:0.3;animation:userPulse 2s infinite;"></div>
+          <div style="position:absolute;inset:2px;background:#60A5FA;border:2.5px solid #fff;border-radius:50%;box-shadow:0 2px 8px rgba(96,165,250,0.6);"></div>
+        </div>`,
+        className: "",
+        iconSize: [20, 20],
+        iconAnchor: [10, 10],
+      });
+      userMarkerRef.current = L.marker([lat, lng], { icon })
+        .addTo(leafletMapRef.current)
+        .bindPopup("<b>Você está aqui</b>");
+    }
+
+    // Centraliza o mapa na localização real do usuário (só na primeira vez)
+    if (userLocation.firstTime) {
+      leafletMapRef.current.setView([lat, lng], 14, { animate: true });
+    }
+  }, [userLocation]);
+
+  // Rebuild markers quando lugares mudam
   useEffect(() => {
     placesRef.current = places;
     if (!addMarkersRef.current || !leafletMapRef.current) return;
@@ -464,7 +496,7 @@ function HomeMapView({ places, onSelectPlace, onAreaChange }) {
     onAreaRef.current(visible.length > 0 ? visible : places);
   }, [places]);
 
-  // Initialize map once
+  // Inicializa mapa uma vez
   useEffect(() => {
     if (!document.getElementById("leaflet-css")) {
       const link = document.createElement("link");
@@ -483,6 +515,7 @@ function HomeMapView({ places, onSelectPlace, onAreaChange }) {
         .vybe-pin { width:42px; height:42px; border-radius:50% 50% 50% 0; transform:rotate(-45deg); display:flex; align-items:center; justify-content:center; box-shadow:0 6px 18px rgba(0,0,0,0.5); border:2px solid rgba(255,255,255,0.65); }
         .vybe-pin span { transform:rotate(45deg); font-size:18px; line-height:1; }
         .vybe-pin-dot { width:7px; height:7px; border-radius:50%; margin-top:2px; opacity:0.75; }
+        @keyframes userPulse { 0%,100%{transform:scale(1);opacity:0.3} 50%{transform:scale(2);opacity:0} }
       `;
       document.head.appendChild(style);
     }
@@ -499,20 +532,12 @@ function HomeMapView({ places, onSelectPlace, onAreaChange }) {
 
       const map = L.map(mapRef.current, { center: [-23.1891, -45.8841], zoom: 14, zoomControl: false });
 
-      // Dark tile layer (Carto Dark Matter)
       L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        attribution: '&copy; OpenStreetMap &copy; CARTO',
         maxZoom: 19,
       }).addTo(map);
 
       L.control.zoom({ position: "bottomright" }).addTo(map);
-
-      L.marker([-23.1860, -45.8870], {
-        icon: L.divIcon({
-          html: `<div style="width:16px;height:16px;background:#60A5FA;border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 6px rgba(96,165,250,0.25);"></div>`,
-          className: "vybe-marker", iconSize: [16, 16], iconAnchor: [8, 8],
-        }),
-      }).addTo(map).bindPopup("<b>Você está aqui</b>");
 
       const addMarkers = (list) => {
         markersRef.current.forEach(m => m.remove());
@@ -564,6 +589,7 @@ function HomeMapView({ places, onSelectPlace, onAreaChange }) {
         leafletMapRef.current.remove();
         leafletMapRef.current = null;
         markersRef.current = [];
+        userMarkerRef.current = null;
         addMarkersRef.current = null;
       }
     };
@@ -716,7 +742,10 @@ export default function App() {
   const [areaPlaces, setAreaPlaces] = useState(PLACES);
   const [favPlaces, setFavPlaces] = useState([]);
   const [favEvents, setFavEvents] = useState([]);
+  const [userLocation, setUserLocation] = useState(null);
+  const [locStatus, setLocStatus] = useState("idle"); // idle | loading | granted | denied
 
+  // Auth
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
@@ -727,6 +756,27 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Geolocalização — pede permissão automaticamente ao abrir
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    setLocStatus("loading");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude, firstTime: true });
+        setLocStatus("granted");
+        // Atualiza posição em tempo real
+        navigator.geolocation.watchPosition(
+          (p) => setUserLocation({ lat: p.coords.latitude, lng: p.coords.longitude, firstTime: false }),
+          () => {},
+          { enableHighAccuracy: true, maximumAge: 10000 }
+        );
+      },
+      () => setLocStatus("denied"),
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }, []);
+
+  // Eventos
   useEffect(() => {
     const fetchEvents = async () => {
       setLoadingEvents(true);
@@ -795,13 +845,17 @@ export default function App() {
       {tab === "home" && (
         <div style={{ flex: 1, position: "relative", minHeight: 0, overflow: "hidden" }}>
           <div style={{ position: "absolute", inset: 0, zIndex: 1 }}>
-            <HomeMapView places={placesToShow} onSelectPlace={setSelected} onAreaChange={setAreaPlaces} />
+            <HomeMapView places={placesToShow} onSelectPlace={setSelected} onAreaChange={setAreaPlaces} userLocation={userLocation} />
           </div>
           <div style={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 200, padding: "20px 16px 12px", background: "linear-gradient(180deg, rgba(8,8,8,0.95) 60%, transparent)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
               <h1 style={{ margin: 0, fontSize: 26, fontWeight: 900, background: "linear-gradient(90deg, #A78BFA, #F472B6, #FF6B6B)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>vybe.</h1>
               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                <div style={{ background: "rgba(0,0,0,0.8)", border: "1px solid #333", borderRadius: 20, padding: "5px 12px", fontSize: 11, color: "#aaa" }}>📍 SJC, SP</div>
+                {/* Indicador de localização */}
+                <div style={{ background: "rgba(0,0,0,0.8)", border: `1px solid ${locStatus === "granted" ? "#60A5FA55" : "#333"}`, borderRadius: 20, padding: "5px 12px", fontSize: 11, color: locStatus === "granted" ? "#60A5FA" : "#aaa", display: "flex", alignItems: "center", gap: 5 }}>
+                  {locStatus === "loading" ? "📡" : locStatus === "granted" ? "📍" : "📍"} 
+                  {locStatus === "granted" ? "Você aqui" : "SJC, SP"}
+                </div>
                 <button
                   onClick={() => setShowPrefs(true)}
                   style={{ background: "rgba(0,0,0,0.8)", border: `1px solid ${prefs ? "#A78BFA88" : "#333"}`, borderRadius: 20, padding: "5px 10px", fontSize: 13, cursor: "pointer", color: prefs ? "#A78BFA" : "#aaa", lineHeight: 1 }}
