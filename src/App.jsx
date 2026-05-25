@@ -804,7 +804,7 @@ export default function App() {
   useEffect(() => {
     const fetchPlaces = async () => {
       const { data, error } = await supabase.from("places").select("*");
-      console.log("places data:", data, "error:", error);
+      if (!error && data?.length > 0) {
         const formatted = data.map(p => ({
           id: p.id,
           name: p.name,
