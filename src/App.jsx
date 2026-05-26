@@ -127,6 +127,19 @@ const EVENT_TYPES = ["Todos", "Universitária", "Eletrônico", "Funk", "Rock"];
 const crowdColor = (c) => c >= 90 ? "#EF4444" : c >= 65 ? "#F59E0B" : "#22C55E";
 const crowdLabel = (c) => c >= 90 ? "Lotado" : c >= 65 ? "Agitado" : "Tranquilo";
 const crowdEmoji = (c) => c >= 90 ? "🔴" : c >= 65 ? "🟡" : "🟢";
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+function haversineKm(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+function fmtDist(km) {
+  if (km < 1) return Math.round(km * 1000) + "m";
+  return km.toFixed(1) + "km";
+}
 const typeLabel = (t) => t === "bar" ? "Bar" : t === "club" ? "Balada" : t === "restaurant" ? "Restaurante" : t;
 
 // ─── COMPONENTS ──────────────────────────────────────────────────────────────
@@ -217,8 +230,15 @@ function PlaceDetail({ place, onClose }) {
   const [reports, setReports] = useState(place.reports);
   const [sent, setSent] = useState(false);
 
-  const submit = () => {
+  const submit = async () => {
     if (!newReport.trim()) return;
+    // Save to Supabase
+    await supabase.from("reports").insert({
+      place_id: place.id,
+      user_name: "Você",
+      msg: newReport,
+      mood: newMood,
+    });
     setReports(prev => [{ user: "Você", avatar: "VC", time: "agora", msg: newReport, mood: newMood }, ...prev]);
     setNewReport("");
     setSent(true);
@@ -755,6 +775,158 @@ function ProfileScreen({ user, onClose, favPlaces, favEvents, onLogout }) {
   );
 }
 
+
+// ─── LIVE TAB ─────────────────────────────────────────────────────────────────
+function LiveTab({ dbPlaces, user, onSelectPlace }) {
+  const [liveReports, setLiveReports] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const placeMap = {};
+  dbPlaces.forEach(p => { placeMap[p.id] = p; });
+
+  // Format time
+  const fmtTime = (ts) => {
+    const diff = (Date.now() - new Date(ts)) / 1000;
+    if (diff < 60) return "agora";
+    if (diff < 3600) return Math.floor(diff/60) + "min atrás";
+    if (diff < 86400) return Math.floor(diff/3600) + "h atrás";
+    return Math.floor(diff/86400) + "d atrás";
+  };
+
+  useEffect(() => {
+    // Fetch initial reports
+    const fetchReports = async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("reports")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (!error && data) setLiveReports(data);
+      setLoading(false);
+    };
+    fetchReports();
+
+    // Subscribe to realtime
+    const channel = supabase
+      .channel("reports-live")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "reports" }, (payload) => {
+        setLiveReports(prev => [payload.new, ...prev]);
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
+  const allReports = [
+    ...liveReports,
+    ...dbPlaces.flatMap(p => (p.reports || []).map(r => ({
+      id: `local-${p.id}-${r.user}`,
+      place_id: p.id,
+      user_name: r.user,
+      user_avatar: r.avatar,
+      msg: r.msg,
+      mood: r.mood,
+      created_at: new Date(Date.now() - Math.random() * 3600000).toISOString(),
+    })))
+  ];
+
+  return (
+    <div style={{ flex: 1, overflow: "auto", padding: "20px 16px 100px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+        <h2 style={{ margin: 0, fontSize: 28, fontWeight: 900, letterSpacing: -0.8, color: "#f5f5f5" }}>Ao Vivo</h2>
+        <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#EF4444", boxShadow: "0 0 8px #EF4444", animation: "pulse 2s infinite" }} />
+      </div>
+      <p style={{ margin: "0 0 20px", fontSize: 13, color: "#555" }}>Updates em tempo real de quem está lá agora</p>
+
+      {loading ? (
+        <div style={{ textAlign: "center", padding: "40px", color: "#555" }}>
+          <div style={{ fontSize: 32, marginBottom: 8 }}>⏳</div>
+          <div>Carregando...</div>
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {allReports.map((r, i) => {
+            const place = placeMap[r.place_id];
+            if (!place) return null;
+            const initials = r.user_avatar || r.user_name?.slice(0,2)?.toUpperCase() || "??";
+            return (
+              <div key={r.id || i} onClick={() => onSelectPlace(place)} style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 14, padding: "12px 14px", cursor: "pointer", borderLeft: `3px solid ${place.color}` }}>
+                <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                  <div style={{ width: 34, height: 34, borderRadius: "50%", background: place.color + "22", color: place.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, flexShrink: 0, border: `1.5px solid ${place.color}44` }}>
+                    {initials.length <= 2 ? initials : initials.slice(0,2)}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 4 }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: place.color }}>{place.name}</span>
+                      <span style={{ fontSize: 10, color: "#444" }}>·</span>
+                      <span style={{ fontSize: 11, color: "#555" }}>{fmtTime(r.created_at)}</span>
+                      <span style={{ marginLeft: "auto", fontSize: 16 }}>{r.mood}</span>
+                    </div>
+                    <p style={{ margin: 0, fontSize: 13, color: "#aaa", lineHeight: 1.4 }}>{r.msg}</p>
+                    <div style={{ fontSize: 11, color: "#444", marginTop: 4 }}>por {r.user_name}</div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── LOCATION MODAL ───────────────────────────────────────────────────────────
+function LocationModal({ onClose, onUseGPS, locStatus }) {
+  const [query, setQuery] = useState("");
+
+  const handleSearch = async () => {
+    if (!query.trim()) return;
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query + ", São José dos Campos")}&format=json&limit=1`);
+      const data = await res.json();
+      if (data[0]) {
+        onUseGPS({ lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon), firstTime: true });
+        onClose();
+      } else {
+        alert("Endereço não encontrado. Tente novamente.");
+      }
+    } catch {
+      alert("Erro ao buscar endereço.");
+    }
+  };
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 800, display: "flex", alignItems: "flex-end", backdropFilter: "blur(4px)" }} onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 480, margin: "0 auto", background: "#0d0d0d", borderRadius: "24px 24px 0 0", border: "1px solid #222", padding: "20px 20px 40px" }}>
+        <div style={{ width: 40, height: 4, background: "#333", borderRadius: 2, margin: "0 auto 20px" }} />
+        <h3 style={{ margin: "0 0 16px", fontSize: 18, fontWeight: 800, color: "#f5f5f5" }}>Localização</h3>
+
+        <button onClick={() => { onUseGPS(null); onClose(); }} style={{ width: "100%", padding: "14px 16px", background: "#111", border: "1px solid #60A5FA44", borderRadius: 14, color: "#60A5FA", fontSize: 14, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: "#60A5FA22", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>📍</div>
+          <div style={{ textAlign: "left" }}>
+            <div style={{ fontSize: 14, fontWeight: 700 }}>Minha localização atual</div>
+            <div style={{ fontSize: 12, color: "#555", marginTop: 1 }}>{locStatus === "granted" ? "GPS ativo" : "Usar GPS do dispositivo"}</div>
+          </div>
+        </button>
+
+        <div style={{ position: "relative" }}>
+          <input
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && handleSearch()}
+            placeholder="Buscar endereço ou bairro..."
+            style={{ width: "100%", boxSizing: "border-box", background: "#111", border: "1px solid #333", borderRadius: 14, padding: "14px 50px 14px 16px", color: "#f5f5f5", fontSize: 14, outline: "none", fontFamily: "'Inter Tight', system-ui" }}
+          />
+          <button onClick={handleSearch} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "#A78BFA", border: "none", borderRadius: 10, width: 32, height: 32, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── APP ─────────────────────────────────────────────────────────────────────
 
 const TABS = [
@@ -782,7 +954,11 @@ export default function App() {
   const [favPlaces, setFavPlaces] = useState([]);
   const [favEvents, setFavEvents] = useState([]);
   const [userLocation, setUserLocation] = useState(null);
-  const [locStatus, setLocStatus] = useState("idle"); // idle | loading | granted | denied
+  const [locStatus, setLocStatus] = useState("idle");
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showLocModal, setShowLocModal] = useState(false);
+  const [customLocQuery, setCustomLocQuery] = useState("");
 
   // Auth
   useEffect(() => {
@@ -896,8 +1072,18 @@ export default function App() {
   }, [prefs, dbPlaces]);
 
   const filteredEvents = useMemo(
-    () => events.filter(e => filterEventType === "Todos" || e.type === filterEventType),
-    [events, filterEventType]
+    () => events.filter(e =>
+      (filterEventType === "Todos" || e.type === filterEventType) &&
+      (searchQuery === "" || e.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    ),
+    [events, filterEventType, searchQuery]
+  );
+
+  const filteredAreaPlaces = useMemo(
+    () => searchQuery && tab === "home"
+      ? areaPlaces.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
+      : areaPlaces,
+    [areaPlaces, searchQuery, tab]
   );
 
   if (user === undefined) {
@@ -926,16 +1112,17 @@ export default function App() {
               <h1 style={{ margin: 0, fontSize: 26, fontWeight: 900, background: "linear-gradient(90deg, #A78BFA, #F472B6, #FF6B6B)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>vybe.</h1>
               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                 {/* Indicador de localização */}
-                <div style={{ background: "rgba(0,0,0,0.8)", border: `1px solid ${locStatus === "granted" ? "#60A5FA55" : "#333"}`, borderRadius: 20, padding: "5px 12px", fontSize: 11, color: locStatus === "granted" ? "#60A5FA" : "#aaa", display: "flex", alignItems: "center", gap: 5 }}>
-                  {locStatus === "loading" ? "📡" : locStatus === "granted" ? "📍" : "📍"} 
+                <button onClick={() => setShowLocModal(true)} style={{ background: "rgba(0,0,0,0.8)", border: `1px solid ${locStatus === "granted" ? "#60A5FA55" : "#333"}`, borderRadius: 20, padding: "5px 12px", fontSize: 11, color: locStatus === "granted" ? "#60A5FA" : "#aaa", display: "flex", alignItems: "center", gap: 5, cursor: "pointer" }}>
+                  {locStatus === "loading" ? "📡" : "📍"}
                   {locStatus === "granted" ? "Você aqui" : "SJC, SP"}
-                </div>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 9l6 6 6-6"/></svg>
+                </button>
                 <button
                   onClick={() => setShowPrefs(true)}
                   style={{ background: "rgba(0,0,0,0.8)", border: `1px solid ${prefs ? "#A78BFA88" : "#333"}`, borderRadius: 20, padding: "5px 10px", fontSize: 13, cursor: "pointer", color: prefs ? "#A78BFA" : "#aaa", lineHeight: 1 }}
                 >🎛️</button>
-                <button onClick={() => {}} style={{ width: 34, height: 34, borderRadius: 10, background: "rgba(0,0,0,0.8)", border: "1px solid #333", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5"/></svg>
+                <button onClick={() => setShowSearch(s => !s)} style={{ width: 34, height: 34, borderRadius: 10, background: showSearch ? "#A78BFA22" : "rgba(0,0,0,0.8)", border: `1px solid ${showSearch ? "#A78BFA55" : "#333"}`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={showSearch ? "#A78BFA" : "#aaa"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5"/></svg>
                 </button>
                 <div onClick={() => setShowProfile(true)} style={{ width: 34, height: 34, borderRadius: "50%", overflow: "hidden", cursor: "pointer", border: "2px solid #A78BFA44", flexShrink: 0 }}>
                   {user?.user_metadata?.avatar_url ? (
@@ -955,30 +1142,59 @@ export default function App() {
                 </button>
               ))}
             </div>
+            {showSearch && (
+              <div style={{ marginTop: 8, padding: "0 2px" }}>
+                <input
+                  autoFocus
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  placeholder="Buscar lugar..."
+                  style={{ width: "100%", boxSizing: "border-box", background: "rgba(0,0,0,0.85)", border: "1px solid #333", borderRadius: 12, padding: "9px 14px", color: "#f5f5f5", fontSize: 14, outline: "none", fontFamily: "'Inter Tight', system-ui", backdropFilter: "blur(8px)" }}
+                />
+              </div>
+            )}
           </div>
           <div style={{ position: "absolute", bottom: 80, left: 0, right: 0, zIndex: 200 }}>
-            <div style={{ padding: "0 0 8px 16px", display: "flex", gap: 10, overflowX: "auto", scrollbarWidth: "none" }}>
-              {areaPlaces.map(place => (
-                <div
-                  key={place.id} onClick={() => setSelected(place)}
-                  style={{ flexShrink: 0, width: 180, background: "rgba(10,10,10,0.95)", border: `1px solid ${place.color}55`, borderRadius: 16, padding: "12px 14px", cursor: "pointer", transition: "transform 0.15s" }}
-                  onMouseEnter={e => e.currentTarget.style.transform = "translateY(-3px)"}
-                  onMouseLeave={e => e.currentTarget.style.transform = ""}
-                >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
-                    <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 20, background: place.color + "22", color: place.color, textTransform: "uppercase", fontFamily: "'JetBrains Mono', ui-monospace, monospace" }}>
-                      {place.type === "bar" ? "Bar" : place.type === "club" ? "Balada" : "Rest."}
-                    </span>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: "#f0f0f0" }}>⭐ {place.rating}</span>
+            <div style={{ padding: "0 0 8px 16px", display: "flex", gap: 12, overflowX: "auto", scrollbarWidth: "none" }}>
+              {filteredAreaPlaces.map(place => {
+                const dist = userLocation ? fmtDist(haversineKm(userLocation.lat, userLocation.lng, place.lat, place.lng)) : (place.distance || "—");
+                const isFavPlace = favPlaces.some(p => p.id === place.id);
+                return (
+                  <div key={place.id} onClick={() => setSelected(place)}
+                    style={{ flexShrink: 0, width: 228, borderRadius: 20, background: "rgba(10,10,10,0.96)", border: "1px solid rgba(245,245,245,0.08)", cursor: "pointer", overflow: "hidden", backdropFilter: "blur(20px)", transition: "transform 0.2s" }}
+                    onMouseEnter={e => e.currentTarget.style.transform = "translateY(-3px)"}
+                    onMouseLeave={e => e.currentTarget.style.transform = ""}
+                  >
+                    <div style={{ height: 108, position: "relative", background: place.image_url ? `url(${place.image_url}) center/cover no-repeat` : `repeating-linear-gradient(135deg, ${place.color}33 0 12px, ${place.color}1a 12px 24px)`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      {!place.image_url && <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: place.color, textTransform: "uppercase", textAlign: "center", lineHeight: 1.4 }}>FOTO<br/>em breve</div>}
+                      <div style={{ position: "absolute", top: 10, left: 10, right: 10, display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                        <span style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)", padding: "4px 10px", borderRadius: 999, fontFamily: "'JetBrains Mono', monospace", fontSize: 9, fontWeight: 700, letterSpacing: 1, color: "#fff", textTransform: "uppercase" }}>
+                          {place.type === "bar" ? "🍺 Bar" : place.type === "club" ? "🎵 Balada" : "🍽️ Rest."}
+                        </span>
+                        <button onClick={e => { e.stopPropagation(); toggleFavPlace(place); }} style={{ width: 30, height: 30, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)", border: "none", borderRadius: "50%", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          {isFavPlace ? "❤️" : "🤍"}
+                        </button>
+                      </div>
+                      <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 40, background: "linear-gradient(to top, rgba(0,0,0,0.6), transparent)" }} />
+                    </div>
+                    <div style={{ padding: "12px 14px 14px" }}>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: "#f5f5f5", letterSpacing: -0.3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{place.name}</div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4, marginBottom: 10 }}>
+                        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "#666" }}>{dist}</span>
+                        <span style={{ width: 2, height: 2, borderRadius: "50%", background: "#444" }} />
+                        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "#666" }}>{place.cover}</span>
+                      </div>
+                      <div style={{ height: 4, borderRadius: 3, background: "#1e1e1e", overflow: "hidden", marginBottom: 6 }}>
+                        <div style={{ height: "100%", width: `${place.crowd}%`, borderRadius: 3, background: `linear-gradient(90deg, ${crowdColor(place.crowd)}99, ${crowdColor(place.crowd)})` }} />
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                        <span style={{ width: 6, height: 6, borderRadius: "50%", background: crowdColor(place.crowd), boxShadow: `0 0 5px ${crowdColor(place.crowd)}` }} />
+                        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 700, color: crowdColor(place.crowd) }}>{place.crowd}% {crowdLabel(place.crowd)}</span>
+                      </div>
+                    </div>
                   </div>
-                  <div style={{ fontSize: 13, fontWeight: 800, color: "#f0f0f0", marginBottom: 3 }}>{place.name}</div>
-                  <div style={{ fontSize: 10, color: "#555", marginBottom: 8 }}>{place.distance} · {place.cover}</div>
-                  <div style={{ height: 3, borderRadius: 2, background: "#1e1e1e", overflow: "hidden", marginBottom: 3 }}>
-                    <div style={{ height: "100%", width: `${place.crowd}%`, borderRadius: 2, background: `linear-gradient(90deg, ${crowdColor(place.crowd)}99, ${crowdColor(place.crowd)})` }} />
-                  </div>
-                  <div style={{ fontSize: 9, fontWeight: 700, color: crowdColor(place.crowd) }}>{crowdEmoji(place.crowd)} {place.crowd}% {crowdLabel(place.crowd)}</div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
@@ -991,8 +1207,8 @@ export default function App() {
             <div style={{ padding: "0 16px", display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 10, marginBottom: 14 }}>
               <h1 style={{ fontSize: 32, fontWeight: 900, letterSpacing: -1, margin: 0, lineHeight: 1, color: "#f5f5f5", fontFamily: "'Inter Tight', system-ui" }}>Festas</h1>
               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                <button style={{ width: 40, height: 40, borderRadius: 12, background: "#111", border: "1px solid #222", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f5f5f5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5"/></svg>
+                <button onClick={() => setShowSearch(s => !s)} style={{ width: 40, height: 40, borderRadius: 12, background: showSearch ? "#A78BFA22" : "#111", border: `1px solid ${showSearch ? "#A78BFA55" : "#222"}`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={showSearch ? "#A78BFA" : "#f5f5f5"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5"/></svg>
                 </button>
                 <div onClick={() => setShowProfile(true)} style={{ width: 40, height: 40, borderRadius: "50%", background: "linear-gradient(135deg, #A78BFA, #F472B6)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 4px 14px rgba(167,139,250,0.4)" }}>
                   {user?.user_metadata?.avatar_url ? (
@@ -1008,6 +1224,17 @@ export default function App() {
                 <button key={t} onClick={() => setFilterEventType(t)} style={{ flexShrink: 0, padding: "7px 16px", borderRadius: 999, background: filterEventType === t ? "#f5f5f5" : "#111", color: filterEventType === t ? "#080808" : "#666", border: filterEventType === t ? "none" : "1px solid #222", fontSize: 13, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}>{t}</button>
               ))}
             </div>
+            {showSearch && (
+              <div style={{ padding: "8px 16px 0" }}>
+                <input
+                  autoFocus
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  placeholder="Buscar festa por nome..."
+                  style={{ width: "100%", boxSizing: "border-box", background: "#111", border: "1px solid #222", borderRadius: 12, padding: "10px 14px", color: "#f5f5f5", fontSize: 14, outline: "none", fontFamily: "'Inter Tight', system-ui" }}
+                />
+              </div>
+            )}
           </div>
           <div style={{ padding: "8px 16px 100px", display: "flex", flexDirection: "column", gap: 16 }}>
             {loadingEvents ? (
@@ -1029,29 +1256,7 @@ export default function App() {
 
       {/* AO VIVO */}
       {tab === "live" && (
-        <div style={{ flex: 1, overflow: "auto", padding: "20px 16px 100px" }}>
-          <h2 style={{ margin: "0 0 4px", fontSize: 22, fontWeight: 800, color: "#f5f5f5" }}>Ao Vivo 🔴</h2>
-          <p style={{ margin: "0 0 20px", fontSize: 13, color: "#555" }}>Updates em tempo real de quem está lá agora</p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {dbPlaces.flatMap(p => p.reports.map(r => ({ ...r, place: p }))).map((r, i) => (
-              <div key={i} onClick={() => setSelected(r.place)} style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 14, padding: "12px 14px", cursor: "pointer", borderLeft: `3px solid ${r.place.color}` }}>
-                <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-                  <Avatar initials={r.avatar} color={r.place.color} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 4 }}>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: r.place.color }}>{r.place.name}</span>
-                      <span style={{ fontSize: 10, color: "#444" }}>·</span>
-                      <span style={{ fontSize: 11, color: "#555" }}>{r.time}</span>
-                      <span style={{ marginLeft: "auto", fontSize: 16 }}>{r.mood}</span>
-                    </div>
-                    <p style={{ margin: 0, fontSize: 13, color: "#aaa", lineHeight: 1.4 }}>{r.msg}</p>
-                    <div style={{ fontSize: 11, color: "#444", marginTop: 4 }}>por {r.user}</div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <LiveTab dbPlaces={dbPlaces} user={user} onSelectPlace={setSelected} />
       )}
 
       {/* SALVOS */}
@@ -1129,6 +1334,19 @@ export default function App() {
       {selectedEvent && <EventDetail event={selectedEvent} onClose={() => setSelectedEvent(null)} />}
       {showPrefs && <PreferencesModal current={prefs} onClose={() => setShowPrefs(false)} onApply={setPrefs} />}
       {showProfile && <ProfileScreen user={user} onClose={() => setShowProfile(false)} favPlaces={favPlaces} favEvents={favEvents} onLogout={handleLogout} />}
+      {showLocModal && <LocationModal onClose={() => setShowLocModal(false)} locStatus={locStatus} onUseGPS={(loc) => {
+        if (loc === null) {
+          // Re-request GPS
+          navigator.geolocation?.getCurrentPosition(
+            pos => { setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude, firstTime: true }); setLocStatus("granted"); },
+            () => setLocStatus("denied"),
+            { enableHighAccuracy: true }
+          );
+        } else {
+          setUserLocation(loc);
+          setLocStatus("granted");
+        }
+      }} />}
     </div>
   );
 }
