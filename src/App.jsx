@@ -453,9 +453,11 @@ function HomeMapView({ places, onSelectPlace, onAreaChange, userLocation }) {
   const placesRef = useRef(places);
   const onSelectRef = useRef(onSelectPlace);
   const onAreaRef = useRef(onAreaChange);
+  const userLocationRef = useRef(userLocation);
 
   useEffect(() => { onSelectRef.current = onSelectPlace; }, [onSelectPlace]);
   useEffect(() => { onAreaRef.current = onAreaChange; }, [onAreaChange]);
+  useEffect(() => { userLocationRef.current = userLocation; }, [userLocation]);
 
   // Atualiza marcador do usuário quando localização muda
   useEffect(() => {
@@ -536,7 +538,10 @@ function HomeMapView({ places, onSelectPlace, onAreaChange, userLocation }) {
         try { mapRef.current.innerHTML = ""; } catch (e) {}
       }
 
-      const map = L.map(mapRef.current, { center: [-23.1891, -45.8841], zoom: 14, zoomControl: false });
+      const initialCenter = userLocationRef.current 
+        ? [userLocationRef.current.lat, userLocationRef.current.lng]
+        : [-23.1891, -45.8841];
+      const map = L.map(mapRef.current, { center: initialCenter, zoom: 15, zoomControl: false });
 
       L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
         attribution: '&copy; OpenStreetMap &copy; CARTO',
@@ -551,8 +556,21 @@ function HomeMapView({ places, onSelectPlace, onAreaChange, userLocation }) {
         list.forEach(place => {
           if (typeof place.lat !== "number" || typeof place.lng !== "number" || isNaN(place.lat) || isNaN(place.lng)) return;
           const icon = L.divIcon({
-            html: `<div class="vybe-pin-wrap"><div class="vybe-pin" style="background:${place.color};"><span>${getEmoji(place.type)}</span></div><div class="vybe-pin-dot" style="background:${place.color};"></div></div>`,
-            className: "vybe-marker", iconSize: [48, 58], iconAnchor: [24, 58], popupAnchor: [0, -52],
+            html: `<div style="display:flex;flex-direction:column;align-items:center;cursor:pointer;">
+              <div style="
+                width:28px;height:28px;
+                background:${place.color};
+                border-radius:50% 50% 50% 0;
+                transform:rotate(-45deg);
+                display:flex;align-items:center;justify-content:center;
+                box-shadow:0 2px 8px ${place.color}88;
+                border:1.5px solid rgba(255,255,255,0.5);
+              ">
+                <span style="transform:rotate(45deg);font-size:12px;line-height:1">${getEmoji(place.type)}</span>
+              </div>
+              <div style="width:4px;height:4px;background:${place.color};border-radius:50%;margin-top:1px;opacity:0.6;"></div>
+            </div>`,
+            className: "vybe-marker", iconSize: [28, 36], iconAnchor: [14, 36], popupAnchor: [0, -36],
           });
           const marker = L.marker([place.lat, place.lng], { icon })
             .addTo(map)
@@ -566,8 +584,14 @@ function HomeMapView({ places, onSelectPlace, onAreaChange, userLocation }) {
 
       const updateVisible = () => {
         const bounds = map.getBounds();
+        const zoom = map.getZoom();
         const visible = placesRef.current.filter(p => bounds.contains([p.lat, p.lng]));
         onAreaRef.current(visible.length > 0 ? visible : placesRef.current);
+        // Show/hide pins based on zoom level
+        markersRef.current.forEach(m => {
+          const el = m.getElement();
+          if (el) el.style.opacity = zoom >= 12 ? "1" : "0";
+        });
       };
 
       map.on("moveend", updateVisible);
