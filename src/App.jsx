@@ -489,11 +489,17 @@ function HomeMapView({ places, onSelectPlace, onAreaChange, userLocation }) {
   // Rebuild markers quando lugares mudam
   useEffect(() => {
     placesRef.current = places;
-    if (!addMarkersRef.current || !leafletMapRef.current) return;
-    addMarkersRef.current(places);
-    const bounds = leafletMapRef.current.getBounds();
-    const visible = places.filter(p => bounds.contains([p.lat, p.lng]));
-    onAreaRef.current(visible.length > 0 ? visible : places);
+    const tryUpdate = () => {
+      if (!addMarkersRef.current || !leafletMapRef.current) {
+        setTimeout(tryUpdate, 300);
+        return;
+      }
+      addMarkersRef.current(places);
+      const bounds = leafletMapRef.current.getBounds();
+      const visible = places.filter(p => bounds.contains([p.lat, p.lng]));
+      onAreaRef.current(visible.length > 0 ? visible : places);
+    };
+    tryUpdate();
   }, [places]);
 
   // Inicializa mapa uma vez
@@ -804,23 +810,23 @@ export default function App() {
   useEffect(() => {
     const fetchPlaces = async () => {
       const { data, error } = await supabase.from("places").select("*");
-      if (!error && data?.length > 0) {
+      if (!error && data && data.length > 0) {
         const formatted = data.map(p => ({
           id: p.id,
           name: p.name,
           type: p.type,
           distance: p.distance || "",
-          tags: p.tags || [],
-          rating: p.rating || 0,
-          crowd: p.crowd || 0,
+          tags: Array.isArray(p.tags) ? p.tags : [],
+          rating: Number(p.rating) || 0,
+          crowd: Number(p.crowd) || 0,
           music: p.music || "",
           cover: p.cover || "Consultar",
           color: p.color || "#A78BFA",
-          lat: p.lat,
-          lng: p.lng,
-          checkins: p.checkins || 0,
+          lat: Number(p.lat),
+          lng: Number(p.lng),
+          checkins: Number(p.checkins) || 0,
           address: p.address || "",
-          reports: p.reports || [],
+          reports: Array.isArray(p.reports) ? p.reports : [],
         }));
         setDbPlaces(formatted);
         setAreaPlaces(formatted);
@@ -849,7 +855,7 @@ export default function App() {
       if (p.crowd > prefs.maxCrowd) return false;
       return true;
     });
-  }, [prefs]);
+  }, [prefs, dbPlaces]);
 
   const filteredEvents = useMemo(
     () => events.filter(e => filterEventType === "Todos" || e.type === filterEventType),
