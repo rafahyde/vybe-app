@@ -144,7 +144,7 @@ function CrowdBar({ value }) {
   return (
     <div style={{ marginTop: 6 }}>
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-        <span style={{ fontSize: 11, color: "#888", fontFamily: "monospace" }}>CHEIO</span>
+        <span style={{ fontSize: 11, color: "#888", fontFamily: "'JetBrains Mono', ui-monospace, monospace" }}>CHEIO</span>
         <span style={{ fontSize: 11, fontWeight: 700, color }}>{crowdEmoji(value)} {value}%</span>
       </div>
       <div style={{ height: 5, borderRadius: 3, background: "#1e1e1e", overflow: "hidden" }}>
@@ -166,7 +166,7 @@ function PlaceCard({ place, onClick, isFav, onToggleFav }) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 2 }}>
-            <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: place.color + "22", color: place.color, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "monospace" }}>{typeLabel(place.type)}</span>
+            <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: place.color + "22", color: place.color, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "'JetBrains Mono', ui-monospace, monospace" }}>{typeLabel(place.type)}</span>
             <span style={{ fontSize: 11, color: "#555" }}>{place.distance}</span>
           </div>
           <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: "#f0f0f0" }}>{place.name}</h3>
@@ -189,11 +189,11 @@ function PlaceCard({ place, onClick, isFav, onToggleFav }) {
       </div>
       <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
         <div style={{ flex: 1, background: "#1a1a1a", borderRadius: 10, padding: "8px 10px" }}>
-          <div style={{ fontSize: 10, color: "#555", marginBottom: 2, fontFamily: "monospace" }}>MÚSICA</div>
+          <div style={{ fontSize: 10, color: "#555", marginBottom: 2, fontFamily: "'JetBrains Mono', ui-monospace, monospace" }}>MÚSICA</div>
           <div style={{ fontSize: 12, color: "#ccc", fontWeight: 600 }}>🎵 {place.music}</div>
         </div>
         <div style={{ flex: 1, background: "#1a1a1a", borderRadius: 10, padding: "8px 10px" }}>
-          <div style={{ fontSize: 10, color: "#555", marginBottom: 2, fontFamily: "monospace" }}>ENTRADA</div>
+          <div style={{ fontSize: 10, color: "#555", marginBottom: 2, fontFamily: "'JetBrains Mono', ui-monospace, monospace" }}>ENTRADA</div>
           <div style={{ fontSize: 12, color: "#ccc", fontWeight: 600 }}>🎟 {place.cover}</div>
         </div>
       </div>
@@ -232,7 +232,7 @@ function PlaceDetail({ place, onClose }) {
         <div style={{ padding: "0 20px 16px", borderBottom: "1px solid #1a1a1a" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
             <div>
-              <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 10px", borderRadius: 20, background: place.color + "22", color: place.color, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "monospace" }}>{place.type}</span>
+              <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 10px", borderRadius: 20, background: place.color + "22", color: place.color, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "'JetBrains Mono', ui-monospace, monospace" }}>{place.type}</span>
               <h2 style={{ margin: "6px 0 2px", fontSize: 22, fontWeight: 800, color: "#f5f5f5" }}>{place.name}</h2>
               <div style={{ color: "#555", fontSize: 12 }}>📍 {place.address}</div>
               <div style={{ color: "#666", fontSize: 13, marginTop: 2 }}>{place.distance} · ⭐ {place.rating} · {place.checkins} check-ins</div>
@@ -248,7 +248,7 @@ function PlaceDetail({ place, onClose }) {
               { label: "ENTRADA", val: place.cover, sub: "cover", color: "#F59E0B" },
             ].map(item => (
               <div key={item.label} style={{ background: "#111", borderRadius: 12, padding: "10px 12px", border: `1px solid ${item.color}22` }}>
-                <div style={{ fontSize: 9, color: "#555", marginBottom: 3, fontFamily: "monospace" }}>{item.label}</div>
+                <div style={{ fontSize: 9, color: "#555", marginBottom: 3, fontFamily: "'JetBrains Mono', ui-monospace, monospace" }}>{item.label}</div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: item.color }}>{item.val}</div>
                 <div style={{ fontSize: 10, color: "#444" }}>{item.sub}</div>
               </div>
@@ -258,7 +258,7 @@ function PlaceDetail({ place, onClose }) {
         </div>
         <div style={{ padding: "16px 20px", borderBottom: "1px solid #1a1a1a" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-            <h4 style={{ margin: 0, fontSize: 13, color: "#888", fontFamily: "monospace", letterSpacing: "0.08em" }}>ATUALIZAÇÕES · {reports.length}</h4>
+            <h4 style={{ margin: 0, fontSize: 13, color: "#888", fontFamily: "'JetBrains Mono', ui-monospace, monospace", letterSpacing: "0.08em" }}>ATUALIZAÇÕES · {reports.length}</h4>
             <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#22C55E", animation: "pulse 2s infinite" }} />
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -278,7 +278,7 @@ function PlaceDetail({ place, onClose }) {
           </div>
         </div>
         <div style={{ padding: "16px 20px" }}>
-          <h4 style={{ margin: "0 0 10px", fontSize: 13, color: "#888", fontFamily: "monospace", letterSpacing: "0.08em" }}>TÁ LÁ? MANDA O VYBE</h4>
+          <h4 style={{ margin: "0 0 10px", fontSize: 13, color: "#888", fontFamily: "'JetBrains Mono', ui-monospace, monospace", letterSpacing: "0.08em" }}>TÁ LÁ? MANDA O VYBE</h4>
           <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
             {["🔥", "✨", "⚡", "😴", "🎵", "🍺"].map(m => (
               <button key={m} onClick={() => setNewMood(m)} style={{ fontSize: 18, background: newMood === m ? "#1a1a1a" : "transparent", border: newMood === m ? `1.5px solid ${place.color}66` : "1.5px solid #222", borderRadius: 8, padding: "4px 8px", cursor: "pointer" }}>{m}</button>
@@ -310,7 +310,7 @@ function PreferencesModal({ onClose, onApply, current }) {
           <button onClick={onClose} style={{ background: "none", border: "none", color: "#666", fontSize: 18, cursor: "pointer" }}>✕</button>
         </div>
         <div style={{ marginBottom: 20 }}>
-          <div style={{ fontSize: 11, color: "#555", marginBottom: 10, fontFamily: "monospace" }}>CLIMA</div>
+          <div style={{ fontSize: 11, color: "#555", marginBottom: 10, fontFamily: "'JetBrains Mono', ui-monospace, monospace" }}>CLIMA</div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
             {VIBES.map(v => (
               <button key={v} onClick={() => toggle(vibePrefs, setVibePrefs, v)} style={{ padding: "6px 14px", borderRadius: 20, background: vibePrefs.includes(v) ? "#A78BFA22" : "#111", color: vibePrefs.includes(v) ? "#A78BFA" : "#666", border: vibePrefs.includes(v) ? "1px solid #A78BFA55" : "1px solid #222", cursor: "pointer", fontSize: 13, fontWeight: 600 }}>{v}</button>
@@ -318,7 +318,7 @@ function PreferencesModal({ onClose, onApply, current }) {
           </div>
         </div>
         <div style={{ marginBottom: 20 }}>
-          <div style={{ fontSize: 11, color: "#555", marginBottom: 10, fontFamily: "monospace" }}>TIPO DE LUGAR</div>
+          <div style={{ fontSize: 11, color: "#555", marginBottom: 10, fontFamily: "'JetBrains Mono', ui-monospace, monospace" }}>TIPO DE LUGAR</div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             {TYPES.slice(1).map(t => (
               <button key={t} onClick={() => toggle(typePrefs, setTypePrefs, t)} style={{ padding: "6px 14px", borderRadius: 20, background: typePrefs.includes(t) ? "#34D39922" : "#111", color: typePrefs.includes(t) ? "#34D399" : "#666", border: typePrefs.includes(t) ? "1px solid #34D39955" : "1px solid #222", cursor: "pointer", fontSize: 13, fontWeight: 600 }}>{typeLabel(t)}</button>
@@ -327,7 +327,7 @@ function PreferencesModal({ onClose, onApply, current }) {
         </div>
         <div style={{ marginBottom: 24 }}>
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-            <span style={{ fontSize: 11, color: "#555", fontFamily: "monospace" }}>MAX CHEIO</span>
+            <span style={{ fontSize: 11, color: "#555", fontFamily: "'JetBrains Mono', ui-monospace, monospace" }}>MAX CHEIO</span>
             <span style={{ fontSize: 12, fontWeight: 700, color: crowdColor(maxCrowd) }}>{crowdEmoji(maxCrowd)} {maxCrowd}%</span>
           </div>
           <input type="range" min={20} max={100} step={5} value={maxCrowd} onChange={e => setMaxCrowd(+e.target.value)} style={{ width: "100%", accentColor: crowdColor(maxCrowd) }} />
@@ -358,7 +358,7 @@ function EventCard({ event, onClick, isFav, onToggleFav }) {
         <div style={{ position: "absolute", top: -20, right: -20, fontSize: 80, opacity: 0.15, transform: "rotate(-10deg)" }}>{event.emoji}</div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
           <div>
-            <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 10px", borderRadius: 20, background: "rgba(0,0,0,0.3)", color: "#fff", textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "monospace" }}>{event.type}</span>
+            <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 10px", borderRadius: 20, background: "rgba(0,0,0,0.3)", color: "#fff", textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "'JetBrains Mono', ui-monospace, monospace" }}>{event.type}</span>
             <h3 style={{ margin: "8px 0 4px", fontSize: 18, fontWeight: 900, color: "#fff", lineHeight: 1.2 }}>{event.name}</h3>
           </div>
           <div style={{ fontSize: 32 }}>{event.emoji}</div>
@@ -395,7 +395,7 @@ function EventDetail({ event, onClose }) {
         <div style={{ background: event.gradient, padding: "20px 20px 24px", position: "relative", overflow: "hidden" }}>
           <div style={{ position: "absolute", top: -30, right: -30, fontSize: 120, opacity: 0.1 }}>{event.emoji}</div>
           <button onClick={onClose} style={{ position: "absolute", top: 12, right: 12, background: "rgba(0,0,0,0.3)", border: "none", color: "#fff", width: 32, height: 32, borderRadius: "50%", cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
-          <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 10px", borderRadius: 20, background: "rgba(0,0,0,0.3)", color: "#fff", textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "monospace" }}>{event.type}</span>
+          <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 10px", borderRadius: 20, background: "rgba(0,0,0,0.3)", color: "#fff", textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "'JetBrains Mono', ui-monospace, monospace" }}>{event.type}</span>
           <h2 style={{ margin: "8px 0 4px", fontSize: 24, fontWeight: 900, color: "#fff" }}>{event.name}</h2>
           <div style={{ display: "flex", gap: 14, marginTop: 6 }}>
             <span style={{ fontSize: 13, color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>📅 {event.date}</span>
@@ -405,11 +405,11 @@ function EventDetail({ event, onClose }) {
           <div style={{ fontSize: 13, color: "rgba(255,255,255,0.85)", marginTop: 6, fontWeight: 600 }}>👥 {event.confirmed} confirmados</div>
         </div>
         <div style={{ padding: "16px 20px", borderBottom: "1px solid #1a1a1a" }}>
-          <h4 style={{ margin: "0 0 8px", fontSize: 11, color: "#555", fontFamily: "monospace", letterSpacing: "0.08em" }}>SOBRE O EVENTO</h4>
+          <h4 style={{ margin: "0 0 8px", fontSize: 11, color: "#555", fontFamily: "'JetBrains Mono', ui-monospace, monospace", letterSpacing: "0.08em" }}>SOBRE O EVENTO</h4>
           <p style={{ margin: 0, fontSize: 14, color: "#aaa", lineHeight: 1.6 }}>{event.description}</p>
         </div>
         <div style={{ padding: "16px 20px", borderBottom: "1px solid #1a1a1a" }}>
-          <h4 style={{ margin: "0 0 12px", fontSize: 11, color: "#555", fontFamily: "monospace", letterSpacing: "0.08em" }}>🎵 LINEUP</h4>
+          <h4 style={{ margin: "0 0 12px", fontSize: 11, color: "#555", fontFamily: "'JetBrains Mono', ui-monospace, monospace", letterSpacing: "0.08em" }}>🎵 LINEUP</h4>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {event.lineup.map((a, i) => (
               <div key={a} style={{ display: "flex", alignItems: "center", gap: 12, background: "#111", borderRadius: 12, padding: "10px 14px", border: `1px solid ${event.color}22` }}>
@@ -420,7 +420,7 @@ function EventDetail({ event, onClose }) {
           </div>
         </div>
         <div style={{ padding: "16px 20px" }}>
-          <h4 style={{ margin: "0 0 12px", fontSize: 11, color: "#555", fontFamily: "monospace", letterSpacing: "0.08em" }}>🎟 INGRESSOS</h4>
+          <h4 style={{ margin: "0 0 12px", fontSize: 11, color: "#555", fontFamily: "'JetBrains Mono', ui-monospace, monospace", letterSpacing: "0.08em" }}>🎟 INGRESSOS</h4>
           <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
             {event.tickets.map(t => (
               <div key={t.lote} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#111", borderRadius: 12, padding: "12px 14px", border: t.available ? `1px solid ${event.color}33` : "1px solid #1a1a1a", opacity: t.available ? 1 : 0.5 }}>
@@ -511,6 +511,13 @@ function HomeMapView({ places, onSelectPlace, onAreaChange, userLocation }) {
       link.id = "leaflet-css";
       link.rel = "stylesheet";
       link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+      document.head.appendChild(link);
+    }
+    if (!document.getElementById("vybe-fonts")) {
+      const link = document.createElement("link");
+      link.id = "vybe-fonts";
+      link.rel = "stylesheet";
+      link.href = "https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700&display=swap";
       document.head.appendChild(link);
     }
     if (!document.getElementById("vybe-map-style")) {
@@ -641,7 +648,7 @@ function LoginScreen({ onGuest }) {
   };
 
   return (
-    <div style={{ height: "100%", background: "#080808", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 28px", fontFamily: "system-ui, -apple-system, sans-serif", position: "relative", overflow: "hidden" }}>
+    <div style={{ height: "100%", background: "#080808", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 28px", fontFamily: "'Inter Tight', -apple-system, system-ui, sans-serif", position: "relative", overflow: "hidden" }}>
       <div style={{ position: "absolute", top: "10%", left: "20%", width: 200, height: 200, borderRadius: "50%", background: "#A78BFA", opacity: 0.08, filter: "blur(60px)", pointerEvents: "none" }} />
       <div style={{ position: "absolute", bottom: "20%", right: "10%", width: 250, height: 250, borderRadius: "50%", background: "#F472B6", opacity: 0.08, filter: "blur(80px)", pointerEvents: "none" }} />
       <div style={{ textAlign: "center", marginBottom: 48 }}>
@@ -685,7 +692,7 @@ function ProfileScreen({ user, onClose, favPlaces, favEvents, onLogout }) {
   const avatar = user?.user_metadata?.avatar_url;
 
   return (
-    <div style={{ position: "fixed", inset: 0, background: "#080808", zIndex: 700, display: "flex", flexDirection: "column", fontFamily: "system-ui, -apple-system, sans-serif", overflowY: "auto" }}>
+    <div style={{ position: "fixed", inset: 0, background: "#080808", zIndex: 700, display: "flex", flexDirection: "column", fontFamily: "'Inter Tight', -apple-system, system-ui, sans-serif", overflowY: "auto" }}>
       <div style={{ background: "linear-gradient(135deg, #A78BFA, #F472B6)", padding: "60px 20px 70px", position: "relative" }}>
         <button onClick={onClose} style={{ position: "absolute", top: 20, right: 20, background: "rgba(0,0,0,0.3)", border: "none", color: "#fff", width: 36, height: 36, borderRadius: "50%", cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
@@ -713,7 +720,7 @@ function ProfileScreen({ user, onClose, favPlaces, favEvents, onLogout }) {
         </div>
       </div>
       <div style={{ padding: "20px 20px 100px", display: "flex", flexDirection: "column", gap: 10 }}>
-        <div style={{ fontSize: 11, color: "#444", fontFamily: "monospace", letterSpacing: "0.08em", marginBottom: 4 }}>MINHA CONTA</div>
+        <div style={{ fontSize: 11, color: "#444", fontFamily: "'JetBrains Mono', ui-monospace, monospace", letterSpacing: "0.08em", marginBottom: 4 }}>MINHA CONTA</div>
         <div style={{ background: "#111", borderRadius: 14, border: "1px solid #222", overflow: "hidden" }}>
           {[{ icon: "❤️", title: "Lugares salvos", sub: `${favPlaces.length} lugares`, border: true }, { icon: "🎉", title: "Festas salvas", sub: `${favEvents.length} festas`, border: false }].map((item, i) => (
             <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", borderBottom: item.border ? "1px solid #1a1a1a" : "none" }}>
@@ -726,7 +733,7 @@ function ProfileScreen({ user, onClose, favPlaces, favEvents, onLogout }) {
             </div>
           ))}
         </div>
-        <div style={{ fontSize: 11, color: "#444", fontFamily: "monospace", letterSpacing: "0.08em", marginBottom: 4, marginTop: 8 }}>EM BREVE</div>
+        <div style={{ fontSize: 11, color: "#444", fontFamily: "'JetBrains Mono', ui-monospace, monospace", letterSpacing: "0.08em", marginBottom: 4, marginTop: 8 }}>EM BREVE</div>
         <div style={{ background: "#111", borderRadius: 14, border: "1px solid #1a1a1a", overflow: "hidden", opacity: 0.5 }}>
           {[{ icon: "🏆", title: "Badges e conquistas", sub: "Desbloqueie recompensas" }, { icon: "👥", title: "Amigos", sub: "Veja onde seus amigos estão" }, { icon: "📍", title: "Histórico de visitas", sub: "Lugares que você foi" }].map((item, i) => (
             <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", borderBottom: i < 2 ? "1px solid #1a1a1a" : "none" }}>
@@ -906,7 +913,7 @@ export default function App() {
   }
 
   return (
-    <div style={{ height: "100%", background: "#080808", color: "#f5f5f5", maxWidth: 480, margin: "0 auto", position: "relative", fontFamily: "system-ui, -apple-system, sans-serif", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+    <div style={{ height: "100%", background: "#080808", color: "#f5f5f5", maxWidth: 480, margin: "0 auto", position: "relative", fontFamily: "'Inter Tight', -apple-system, system-ui, sans-serif", display: "flex", flexDirection: "column", overflow: "hidden" }}>
 
       {/* HOME */}
       {tab === "home" && (
@@ -927,6 +934,9 @@ export default function App() {
                   onClick={() => setShowPrefs(true)}
                   style={{ background: "rgba(0,0,0,0.8)", border: `1px solid ${prefs ? "#A78BFA88" : "#333"}`, borderRadius: 20, padding: "5px 10px", fontSize: 13, cursor: "pointer", color: prefs ? "#A78BFA" : "#aaa", lineHeight: 1 }}
                 >🎛️</button>
+                <button onClick={() => {}} style={{ width: 34, height: 34, borderRadius: 10, background: "rgba(0,0,0,0.8)", border: "1px solid #333", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5"/></svg>
+                </button>
                 <div onClick={() => setShowProfile(true)} style={{ width: 34, height: 34, borderRadius: "50%", overflow: "hidden", cursor: "pointer", border: "2px solid #A78BFA44", flexShrink: 0 }}>
                   {user?.user_metadata?.avatar_url ? (
                     <img src={user.user_metadata.avatar_url} alt="perfil" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -956,7 +966,7 @@ export default function App() {
                   onMouseLeave={e => e.currentTarget.style.transform = ""}
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
-                    <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 20, background: place.color + "22", color: place.color, textTransform: "uppercase", fontFamily: "monospace" }}>
+                    <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 20, background: place.color + "22", color: place.color, textTransform: "uppercase", fontFamily: "'JetBrains Mono', ui-monospace, monospace" }}>
                       {place.type === "bar" ? "Bar" : place.type === "club" ? "Balada" : "Rest."}
                     </span>
                     <span style={{ fontSize: 11, fontWeight: 700, color: "#f0f0f0" }}>⭐ {place.rating}</span>
@@ -977,25 +987,38 @@ export default function App() {
       {/* FESTAS */}
       {tab === "festas" && (
         <div style={{ flex: 1, overflow: "auto" }}>
-          <div style={{ padding: "20px 16px 0", background: "#080808" }}>
-            <h2 style={{ margin: "0 0 2px", fontSize: 24, fontWeight: 800, color: "#f5f5f5" }}>Festas & Shows 🎉</h2>
-            <p style={{ margin: "0 0 14px", fontSize: 13, color: "#555" }}>Eventos próximos em São José dos Campos</p>
-            <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 8, scrollbarWidth: "none" }}>
+          <div style={{ position: "sticky", top: 0, zIndex: 5, background: "linear-gradient(180deg, #080808 80%, transparent)", paddingTop: 20, paddingBottom: 12 }}>
+            <div style={{ padding: "0 16px", display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 10, marginBottom: 14 }}>
+              <h1 style={{ fontSize: 32, fontWeight: 900, letterSpacing: -1, margin: 0, lineHeight: 1, color: "#f5f5f5", fontFamily: "'Inter Tight', system-ui" }}>Festas</h1>
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <button style={{ width: 40, height: 40, borderRadius: 12, background: "#111", border: "1px solid #222", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f5f5f5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5"/></svg>
+                </button>
+                <div onClick={() => setShowProfile(true)} style={{ width: 40, height: 40, borderRadius: "50%", background: "linear-gradient(135deg, #A78BFA, #F472B6)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 4px 14px rgba(167,139,250,0.4)" }}>
+                  {user?.user_metadata?.avatar_url ? (
+                    <img src={user.user_metadata.avatar_url} style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />
+                  ) : (
+                    <span style={{ color: "#fff", fontWeight: 700, fontSize: 14 }}>{user?.email?.[0]?.toUpperCase() || "V"}</span>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 4, scrollbarWidth: "none", padding: "0 16px" }}>
               {EVENT_TYPES.map(t => (
-                <button key={t} onClick={() => setFilterEventType(t)} style={{ flexShrink: 0, padding: "5px 14px", borderRadius: 20, background: filterEventType === t ? "#f5f5f5" : "#111", color: filterEventType === t ? "#080808" : "#666", border: filterEventType === t ? "none" : "1px solid #222", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>{t}</button>
+                <button key={t} onClick={() => setFilterEventType(t)} style={{ flexShrink: 0, padding: "7px 16px", borderRadius: 999, background: filterEventType === t ? "#f5f5f5" : "#111", color: filterEventType === t ? "#080808" : "#666", border: filterEventType === t ? "none" : "1px solid #222", fontSize: 13, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}>{t}</button>
               ))}
             </div>
           </div>
-          <div style={{ padding: "12px 16px 100px", display: "flex", flexDirection: "column", gap: 14 }}>
+          <div style={{ padding: "8px 16px 100px", display: "flex", flexDirection: "column", gap: 16 }}>
             {loadingEvents ? (
               <div style={{ textAlign: "center", padding: "60px 20px", color: "#555" }}>
                 <div style={{ fontSize: 40, marginBottom: 12 }}>⏳</div>
                 <div style={{ fontSize: 16, fontWeight: 600 }}>Carregando eventos...</div>
               </div>
             ) : filteredEvents.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "60px 20px", color: "#555" }}>
-                <div style={{ fontSize: 40, marginBottom: 12 }}>🎉</div>
-                <div style={{ fontSize: 16, fontWeight: 600 }}>Nenhum evento nessa categoria</div>
+              <div style={{ margin: "0 0", padding: "24px 20px", background: "#111", border: "1px dashed #222", borderRadius: 18, display: "flex", alignItems: "center", gap: 14 }}>
+                <div style={{ width: 48, height: 48, borderRadius: 14, background: "rgba(245,245,245,0.04)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>🌚</div>
+                <div><div style={{ fontSize: 15, fontWeight: 700, color: "#f5f5f5" }}>Nada rolando aqui</div><div style={{ fontSize: 13, color: "#555", marginTop: 2 }}>Tenta outro filtro →</div></div>
               </div>
             ) : filteredEvents.map(event => (
               <EventCard key={event.id} event={event} onClick={setSelectedEvent} isFav={favEvents.some(e => e.id === event.id)} onToggleFav={toggleFavEvent} />
@@ -1033,36 +1056,59 @@ export default function App() {
 
       {/* SALVOS */}
       {tab === "saved" && (
-        <div style={{ flex: 1, overflow: "auto", padding: "20px 16px 100px" }}>
-          <h2 style={{ margin: "0 0 20px", fontSize: 24, fontWeight: 800, color: "#f5f5f5" }}>Salvos ❤️</h2>
-          <div style={{ marginBottom: 28 }}>
-            <h3 style={{ margin: "0 0 12px", fontSize: 13, color: "#555", fontFamily: "monospace", letterSpacing: "0.08em" }}>LUGARES SALVOS</h3>
-            {favPlaces.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "30px 20px", background: "#111", borderRadius: 16, border: "1px solid #1a1a1a" }}>
-                <div style={{ fontSize: 32, marginBottom: 8 }}>🤍</div>
-                <div style={{ fontSize: 14, color: "#555" }}>Nenhum lugar salvo ainda</div>
-                <div style={{ fontSize: 12, color: "#444", marginTop: 4 }}>Toca o ♡ nos cards para salvar</div>
-              </div>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                {favPlaces.map(place => <PlaceCard key={place.id} place={place} onClick={setSelected} isFav={true} onToggleFav={toggleFavPlace} />)}
-              </div>
-            )}
+        <div style={{ flex: 1, overflow: "auto" }}>
+          <div style={{ padding: "20px 16px 14px", display: "flex", alignItems: "flex-end", justifyContent: "space-between" }}>
+            <h1 style={{ fontSize: 32, fontWeight: 900, letterSpacing: -1, margin: 0, lineHeight: 1, color: "#f5f5f5" }}>Salvos</h1>
+            <div onClick={() => setShowProfile(true)} style={{ width: 40, height: 40, borderRadius: "50%", background: "linear-gradient(135deg, #A78BFA, #F472B6)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 4px 14px rgba(167,139,250,0.4)" }}>
+              {user?.user_metadata?.avatar_url ? <img src={user.user_metadata.avatar_url} style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} /> : <span style={{ color: "#fff", fontWeight: 700, fontSize: 14 }}>{user?.email?.[0]?.toUpperCase() || "V"}</span>}
+            </div>
           </div>
-          <div>
-            <h3 style={{ margin: "0 0 12px", fontSize: 13, color: "#555", fontFamily: "monospace", letterSpacing: "0.08em" }}>FESTAS SALVAS</h3>
-            {favEvents.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "30px 20px", background: "#111", borderRadius: 16, border: "1px solid #1a1a1a" }}>
-                <div style={{ fontSize: 32, marginBottom: 8 }}>🤍</div>
-                <div style={{ fontSize: 14, color: "#555" }}>Nenhuma festa salva ainda</div>
-                <div style={{ fontSize: 12, color: "#444", marginTop: 4 }}>Toca o ♡ nos cards de festas</div>
-              </div>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                {favEvents.map(event => <EventCard key={event.id} event={event} onClick={setSelectedEvent} isFav={true} onToggleFav={toggleFavEvent} />)}
-              </div>
-            )}
+          <div style={{ padding: "0 16px 10px", display: "flex", alignItems: "baseline", gap: 10 }}>
+            <h2 style={{ fontSize: 19, fontWeight: 700, letterSpacing: -0.4, margin: 0, color: "#f5f5f5" }}>Lugares Salvos</h2>
+            <div style={{ background: "#A78BFA22", border: "1px solid #A78BFA44", color: "#A78BFA", padding: "2px 8px", borderRadius: 999, fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 700 }}>{favPlaces.length}</div>
           </div>
+          {favPlaces.length === 0 ? (
+            <div style={{ margin: "0 16px 16px", padding: "24px 20px", background: "#111", border: "1px dashed #222", borderRadius: 18, display: "flex", alignItems: "center", gap: 14 }}>
+              <div style={{ width: 48, height: 48, borderRadius: 14, background: "rgba(245,245,245,0.04)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>🤍</div>
+              <div><div style={{ fontSize: 15, fontWeight: 700, color: "#f5f5f5" }}>Nenhum lugar ainda</div><div style={{ fontSize: 13, color: "#555", marginTop: 2 }}>Encontre seu cantinho →</div></div>
+            </div>
+          ) : (
+            <div style={{ padding: "0 16px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
+              {favPlaces.map(place => (
+                <div key={place.id} onClick={() => setSelected(place)} style={{ background: "#111", border: "1px solid #1a1a1a", borderRadius: 16, padding: 12, display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
+                  <div style={{ width: 46, height: 46, borderRadius: 12, background: place.color + "22", border: `1px solid ${place.color}44`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0 }}>{place.type === "bar" ? "🍺" : place.type === "club" ? "🎵" : "🍽️"}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: "#f5f5f5", letterSpacing: -0.3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{place.name}</div>
+                    <div style={{ fontSize: 12, color: "#555", marginTop: 2 }}>{place.distance} · {place.cover}</div>
+                  </div>
+                  <button onClick={e => { e.stopPropagation(); toggleFavPlace(place); }} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 18, padding: 4 }}>❤️</button>
+                </div>
+              ))}
+            </div>
+          )}
+          <div style={{ padding: "8px 16px 10px", display: "flex", alignItems: "baseline", gap: 10 }}>
+            <h2 style={{ fontSize: 19, fontWeight: 700, letterSpacing: -0.4, margin: 0, color: "#f5f5f5" }}>Festas Salvas</h2>
+            <div style={{ background: "#F472B622", border: "1px solid #F472B644", color: "#F472B6", padding: "2px 8px", borderRadius: 999, fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 700 }}>{favEvents.length}</div>
+          </div>
+          {favEvents.length === 0 ? (
+            <div style={{ margin: "0 16px 100px", padding: "24px 20px", background: "#111", border: "1px dashed #222", borderRadius: 18, display: "flex", alignItems: "center", gap: 14 }}>
+              <div style={{ width: 48, height: 48, borderRadius: 14, background: "rgba(245,245,245,0.04)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>🤍</div>
+              <div><div style={{ fontSize: 15, fontWeight: 700, color: "#f5f5f5" }}>Nenhuma festa ainda</div><div style={{ fontSize: 13, color: "#555", marginTop: 2 }}>Vê o que tá rolando →</div></div>
+            </div>
+          ) : (
+            <div style={{ padding: "0 16px 100px", display: "flex", flexDirection: "column", gap: 10 }}>
+              {favEvents.map(event => (
+                <div key={event.id} onClick={() => setSelectedEvent(event)} style={{ background: "#111", border: "1px solid #1a1a1a", borderRadius: 16, padding: 12, display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
+                  <div style={{ width: 46, height: 46, borderRadius: 12, background: event.gradient, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0 }}>{event.emoji}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: "#f5f5f5", letterSpacing: -0.3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{event.name}</div>
+                    <div style={{ fontSize: 12, color: "#555", marginTop: 2 }}>{event.date} · {event.time}</div>
+                  </div>
+                  <button onClick={e => { e.stopPropagation(); toggleFavEvent(event); }} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 18, padding: 4 }}>❤️</button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
