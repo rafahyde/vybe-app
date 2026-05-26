@@ -746,7 +746,8 @@ export default function App() {
   const [events, setEvents] = useState(EVENTS);
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [areaPlaces, setAreaPlaces] = useState(PLACES);
-  const [dbPlaces, setDbPlaces] = useState(PLACES);
+  const [dbPlaces, setDbPlaces] = useState([]);
+  const [loadingPlaces, setLoadingPlaces] = useState(true);
   const [favPlaces, setFavPlaces] = useState([]);
   const [favEvents, setFavEvents] = useState([]);
   const [userLocation, setUserLocation] = useState(null);
@@ -809,6 +810,7 @@ export default function App() {
   // Busca lugares do Supabase
   useEffect(() => {
     const fetchPlaces = async () => {
+      setLoadingPlaces(true);
       const { data, error } = await supabase.from("places").select("*");
       if (!error && data && data.length > 0) {
         const formatted = data.map(p => ({
@@ -830,7 +832,11 @@ export default function App() {
         }));
         setDbPlaces(formatted);
         setAreaPlaces(formatted);
+      } else {
+        setDbPlaces(PLACES);
+        setAreaPlaces(PLACES);
       }
+      setLoadingPlaces(false);
     };
     fetchPlaces();
   }, []);
@@ -847,9 +853,10 @@ export default function App() {
   const toggleFavEvent = (event) =>
     setFavEvents(prev => prev.some(e => e.id === event.id) ? prev.filter(e => e.id !== event.id) : [...prev, event]);
 
+  const activePlaces = dbPlaces.length > 0 ? dbPlaces : PLACES;
   const placesToShow = useMemo(() => {
-    if (!prefs) return dbPlaces;
-    return dbPlaces.filter(p => {
+    if (!prefs) return activePlaces;
+    return activePlaces.filter(p => {
       if (prefs.typePrefs.length > 0 && !prefs.typePrefs.includes(p.type)) return false;
       if (prefs.vibePrefs.length > 0 && !prefs.vibePrefs.includes(crowdLabel(p.crowd))) return false;
       if (p.crowd > prefs.maxCrowd) return false;
