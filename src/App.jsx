@@ -1036,6 +1036,7 @@ export default function App() {
           checkins: Number(p.checkins) || 0,
           address: p.address || "",
           reports: Array.isArray(p.reports) ? p.reports : [],
+          image_url: p.image_url || null,
         }));
         setDbPlaces(formatted);
         setAreaPlaces(formatted);
