@@ -1166,7 +1166,8 @@ export default function App() {
                     onMouseEnter={e => e.currentTarget.style.transform = "translateY(-3px)"}
                     onMouseLeave={e => e.currentTarget.style.transform = ""}
                   >
-                    <div style={{ height: 108, position: "relative", background: place.image_url ? `url(${place.image_url}) center/cover no-repeat` : `repeating-linear-gradient(135deg, ${place.color}33 0 12px, ${place.color}1a 12px 24px)`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <div style={{ height: 108, position: "relative", background: place.image_url ? "transparent" : `repeating-linear-gradient(135deg, ${place.color}33 0 12px, ${place.color}1a 12px 24px)`, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                      {place.image_url && <img src={place.image_url} alt={place.name} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }} />}
                       {!place.image_url && <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: place.color, textTransform: "uppercase", textAlign: "center", lineHeight: 1.4 }}>FOTO<br/>em breve</div>}
                       <div style={{ position: "absolute", top: 10, left: 10, right: 10, display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                         <span style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)", padding: "4px 10px", borderRadius: 999, fontFamily: "'JetBrains Mono', monospace", fontSize: 9, fontWeight: 700, letterSpacing: 1, color: "#fff", textTransform: "uppercase" }}>
