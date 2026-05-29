@@ -1144,14 +1144,55 @@ export default function App() {
               ))}
             </div>
             {showSearch && (
-              <div style={{ marginTop: 8, padding: "0 2px" }}>
-                <input
-                  autoFocus
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  placeholder="Buscar lugar..."
-                  style={{ width: "100%", boxSizing: "border-box", background: "rgba(0,0,0,0.85)", border: "1px solid #333", borderRadius: 12, padding: "9px 14px", color: "#f5f5f5", fontSize: 14, outline: "none", fontFamily: "'Inter Tight', system-ui", backdropFilter: "blur(8px)" }}
-                />
+              <div style={{ marginTop: 8 }}>
+                <div style={{ position: "relative" }}>
+                  <input
+                    autoFocus
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    placeholder="Buscar estabelecimento..."
+                    style={{ width: "100%", boxSizing: "border-box", background: "rgba(0,0,0,0.92)", border: "1px solid #333", borderRadius: 12, padding: "10px 14px 10px 38px", color: "#f5f5f5", fontSize: 14, outline: "none", fontFamily: "'Inter Tight', system-ui", backdropFilter: "blur(12px)" }}
+                  />
+                  <svg style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", opacity: 0.4 }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5"/></svg>
+                </div>
+                {searchQuery.length > 0 && (
+                  <div style={{ marginTop: 6, background: "rgba(10,10,10,0.98)", border: "1px solid #222", borderRadius: 14, overflow: "hidden", backdropFilter: "blur(16px)", maxHeight: 320, overflowY: "auto" }}>
+                    {activePlaces.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 ? (
+                      <div style={{ padding: "20px 16px", textAlign: "center", color: "#555", fontSize: 13 }}>Nenhum lugar encontrado</div>
+                    ) : (
+                      activePlaces
+                        .filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
+                        .map((p, i, arr) => {
+                          const query = searchQuery.toLowerCase();
+                          const name = p.name;
+                          const idx = name.toLowerCase().indexOf(query);
+                          const before = name.slice(0, idx);
+                          const match = name.slice(idx, idx + query.length);
+                          const after = name.slice(idx + query.length);
+                          return (
+                            <div key={p.id} onClick={() => { setSelected(p); setShowSearch(false); setSearchQuery(""); }}
+                              style={{ padding: "12px 16px", borderBottom: i < arr.length - 1 ? "1px solid #1a1a1a" : "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 12 }}
+                              onMouseEnter={e => e.currentTarget.style.background = "#111"}
+                              onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                            >
+                              <div style={{ width: 38, height: 38, borderRadius: 10, background: p.color + "22", border: `1px solid ${p.color}44`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>
+                                {p.type === "bar" ? "🍺" : p.type === "club" ? "🎵" : "🍽️"}
+                              </div>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontSize: 15, fontWeight: 700, color: "#f5f5f5", letterSpacing: -0.3 }}>
+                                  {before}<span style={{ color: p.color }}>{match}</span>{after}
+                                </div>
+                                <div style={{ fontSize: 12, color: "#555", marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                  {p.address} · São José dos Campos
+                                </div>
+                              </div>
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
+                            </div>
+                          );
+                        })
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>
