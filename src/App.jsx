@@ -3,120 +3,11 @@ import { supabase } from "./supabase";
 
 // ─── DATA ────────────────────────────────────────────────────────────────────
 
-const PLACES = [
-  {
-    id: 1, name: "Bar Coronel", type: "bar", distance: "0.3km",
-    tags: ["petiscos", "chopp", "tradicional"], rating: 4.7, crowd: 80,
-    music: "Sertanejo", cover: "Grátis", color: "#FF6B6B",
-    lat: -23.1825311, lng: -45.8833651, checkins: 34,
-    address: "R. Francisco Raphael, 298 - Centro",
-    reports: [
-      { user: "Ana M.", avatar: "AM", time: "5min atrás", msg: "Chopp gelado e petiscos incríveis hoje! Tá cheio mas vale!", mood: "🔥" },
-      { user: "Rafa S.", avatar: "RS", time: "12min atrás", msg: "Sem fila ainda, aproveita!", mood: "✨" },
-    ],
-  },
-  {
-    id: 2, name: "Honey Club", type: "club", distance: "1.4km",
-    tags: ["eletrônico", "shows", "18+"], rating: 4.1, crowd: 92,
-    music: "House / Pop", cover: "R$40", color: "#A78BFA",
-    lat: -23.193504, lng: -45.890727, checkins: 112,
-    address: "Av. Dr. Ademar de Barros, 152 - Vila Adyana",
-    reports: [
-      { user: "Bia T.", avatar: "BT", time: "2min atrás", msg: "DJ está arrasando agora 🎧 pista lotada!", mood: "🔥" },
-      { user: "Leo R.", avatar: "LR", time: "8min atrás", msg: "Fila ~20min. Dentro tá ótimo!", mood: "⚡" },
-      { user: "Julia C.", avatar: "JC", time: "20min atrás", msg: "Melhor noite aqui em meses, estão tocando muito", mood: "🔥" },
-    ],
-  },
-  {
-    id: 3, name: "Buteco da Villa", type: "bar", distance: "2.1km",
-    tags: ["boteco", "torresmo", "zona leste"], rating: 4.7, crowd: 58,
-    music: "Pagode / Samba", cover: "Grátis", color: "#34D399",
-    lat: -23.174844, lng: -45.854184, checkins: 67,
-    address: "Av. Prof. S. P. T. Pontes, 875 - Vila Industrial",
-    reports: [
-      { user: "Pedro A.", avatar: "PA", time: "15min atrás", msg: "Mesa na calçada disponível, clima perfeito essa noite 🌙", mood: "✨" },
-    ],
-  },
-  {
-    id: 4, name: "Buxixo Gastrobar", type: "restaurant", distance: "1.8km",
-    tags: ["gastronomia", "cocktails", "vista"], rating: 4.6, crowd: 65,
-    music: "Deep House", cover: "Grátis", color: "#F59E0B",
-    lat: -23.195435, lng: -45.908351, checkins: 89,
-    address: "Av. Anchieta, 1580 - Jardim Esplanada",
-    reports: [
-      { user: "Mari F.", avatar: "MF", time: "3min atrás", msg: "Vista incrível hoje, vibes perfeitas 🏙️", mood: "✨" },
-      { user: "Caio B.", avatar: "CB", time: "30min atrás", msg: "Ainda não tá lotado, corre pegar lugar!", mood: "⚡" },
-    ],
-  },
-  {
-    id: 5, name: "Hangar Gastronomia", type: "restaurant", distance: "2.0km",
-    tags: ["temático", "aviação", "família"], rating: 4.8, crowd: 45,
-    music: "MPB", cover: "Grátis", color: "#60A5FA",
-    lat: -23.197353, lng: -45.904646, checkins: 41,
-    address: "Av. Barão do Rio Branco, 669 - Jd. Esplanada",
-    reports: [
-      { user: "Dani W.", avatar: "DW", time: "45min atrás", msg: "Tema de avião incrível, comida ótima. Ótimo pra conversar.", mood: "✨" },
-    ],
-  },
-  {
-    id: 6, name: "FREAKOUT", type: "club", distance: "1.6km",
-    tags: ["rock", "underground", "alternativo"], rating: 3.6, crowd: 88,
-    music: "Rock / Alternativo", cover: "R$25", color: "#F43F5E",
-    lat: -23.191118, lng: -45.891523, checkins: 178,
-    address: "R. Luiz Jacinto, 240 - Centro",
-    reports: [
-      { user: "Thiago P.", avatar: "TP", time: "1min atrás", msg: "Rock pesado rolando agora 🎸 galera doida!", mood: "🔥" },
-      { user: "Flávia N.", avatar: "FN", time: "7min atrás", msg: "Fila tá grande mas tô dentro, valeu a espera!", mood: "⚡" },
-    ],
-  },
-];
+// Dados locais removidos — app usa 100% o Supabase
+const PLACES = [];
 
-const EVENTS = [
-  {
-    id: 1, name: "BATUKADA UNIVERSITÁRIA", type: "Universitária",
-    date: "Sáb, 24 Mai", time: "23:00",
-    location: "UNIVAP — Av. Shishima Hifumi, 2911",
-    description: "A maior festa universitária de SJC está de volta! DJs convidados, open bar por 2h e muito agito. Não perde!",
-    lineup: ["DJ Marquinhos", "DJ Letícia Lima", "MC Paulinho"],
-    confirmed: 312, color: "#F472B6",
-    gradient: "linear-gradient(135deg, #F472B6, #A78BFA)",
-    tickets: [{ lote: "1° Lote", price: "R$25", available: true }, { lote: "2° Lote", price: "R$35", available: true }, { lote: "Na porta", price: "R$50", available: true }],
-    ticketLink: "https://sympla.com.br", emoji: "🎓",
-  },
-  {
-    id: 2, name: "HONEY CLUB PRESENTS: OVERLOAD", type: "Eletrônico",
-    date: "Sex, 23 Mai", time: "00:00",
-    location: "Honey Club — Av. Dr. Ademar de Barros, 152",
-    description: "Uma noite de house music com os melhores DJs do circuito paulista. Pista quente, luz estroboscópica e muito bass.",
-    lineup: ["DJ Snake Jr.", "Valentina Cruz", "KVSH"],
-    confirmed: 489, color: "#A78BFA",
-    gradient: "linear-gradient(135deg, #A78BFA, #60A5FA)",
-    tickets: [{ lote: "1° Lote", price: "R$40", available: false }, { lote: "2° Lote", price: "R$55", available: true }, { lote: "VIP", price: "R$120", available: true }],
-    ticketLink: "https://sympla.com.br", emoji: "🎧",
-  },
-  {
-    id: 3, name: "BAILE DO VALE", type: "Funk",
-    date: "Dom, 25 Mai", time: "22:00",
-    location: "Arena Vale — R. dos Expedicionários, 500",
-    description: "O baile que tomou conta do Vale! Funk, pagode e muito suingue. Entrada feminina com desconto até meia noite.",
-    lineup: ["MC Davi", "MC Livinho", "DJ Batutinha"],
-    confirmed: 728, color: "#34D399",
-    gradient: "linear-gradient(135deg, #34D399, #F59E0B)",
-    tickets: [{ lote: "Feminino", price: "R$15", available: true }, { lote: "Masculino", price: "R$30", available: true }, { lote: "Casal", price: "R$40", available: true }],
-    ticketLink: "https://sympla.com.br", emoji: "🎤",
-  },
-  {
-    id: 4, name: "FREAKOUT FEST", type: "Rock",
-    date: "Sáb, 31 Mai", time: "21:00",
-    location: "FREAKOUT — R. Luiz Jacinto, 240",
-    description: "Festival de rock alternativo com 3 bandas ao vivo, praça de alimentação e muito headbanging. A noite mais pesada do ano!",
-    lineup: ["Scalene", "Lagum", "Los Hermanos Cover"],
-    confirmed: 215, color: "#F43F5E",
-    gradient: "linear-gradient(135deg, #F43F5E, #F59E0B)",
-    tickets: [{ lote: "1° Lote", price: "R$35", available: true }, { lote: "2° Lote", price: "R$45", available: true }, { lote: "Na porta", price: "R$60", available: true }],
-    ticketLink: "https://sympla.com.br", emoji: "🎸",
-  },
-];
+// Eventos vêm 100% do Supabase
+const EVENTS = [];
 
 const VIBES = ["Tranquilo", "Agitado", "Lotado"];
 const TYPES = ["Todos", "bar", "club", "restaurant"];
@@ -256,6 +147,10 @@ function PlaceDetail({ place, onClose }) {
               <h2 style={{ margin: "6px 0 2px", fontSize: 22, fontWeight: 800, color: "#f5f5f5" }}>{place.name}</h2>
               <div style={{ color: "#555", fontSize: 12 }}>📍 {place.address}</div>
               <div style={{ color: "#666", fontSize: 13, marginTop: 2 }}>{place.distance} · ⭐ {place.rating} · {place.checkins} check-ins</div>
+              <a href={`https://www.google.com/maps/dir/?api=1&destination=${place.lat},${place.lng}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6, marginTop: 8, background: "#1a1a1a", border: "1px solid #333", borderRadius: 20, padding: "5px 12px" }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" strokeWidth="2.5" strokeLinecap="round"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+                <span style={{ fontSize: 11, fontWeight: 700, color: "#60A5FA" }}>Me levar até lá</span>
+              </a>
             </div>
             <button onClick={onClose} style={{ background: "#1a1a1a", border: "none", color: "#888", width: 32, height: 32, borderRadius: "50%", cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
           </div>
@@ -464,7 +359,7 @@ function EventDetail({ event, onClose }) {
 
 // ─── HOME MAP VIEW (com localização real) ────────────────────────────────────
 
-function HomeMapView({ places, onSelectPlace, onAreaChange, userLocation }) {
+function HomeMapView({ places, onSelectPlace, onAreaChange, userLocation, activeType }) {
   const mapRef = useRef(null);
   const leafletMapRef = useRef(null);
   const markersRef = useRef([]);
@@ -551,6 +446,7 @@ function HomeMapView({ places, onSelectPlace, onAreaChange, userLocation }) {
         .vybe-pin span { transform:rotate(45deg); font-size:18px; line-height:1; }
         .vybe-pin-dot { width:7px; height:7px; border-radius:50%; margin-top:2px; opacity:0.75; }
         @keyframes userPulse { 0%,100%{transform:scale(1);opacity:0.3} 50%{transform:scale(2);opacity:0} }
+        @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
       `;
       document.head.appendChild(style);
     }
@@ -577,10 +473,14 @@ function HomeMapView({ places, onSelectPlace, onAreaChange, userLocation }) {
 
       L.control.zoom({ position: "bottomright" }).addTo(map);
 
+      const addMarkersRef_type = { current: activeType };
       const addMarkers = (list) => {
         markersRef.current.forEach(m => m.remove());
         markersRef.current = [];
-        list.forEach(place => {
+        const filtered = addMarkersRef_type.current && addMarkersRef_type.current !== "Todos"
+          ? list.filter(p => p.type === addMarkersRef_type.current)
+          : list;
+        filtered.forEach(place => {
           if (typeof place.lat !== "number" || typeof place.lng !== "number" || isNaN(place.lat) || isNaN(place.lng)) return;
           const icon = L.divIcon({
             html: `<div style="display:flex;flex-direction:column;align-items:center;cursor:pointer;">
@@ -706,7 +606,7 @@ function LoginScreen({ onGuest }) {
   );
 }
 
-function ProfileScreen({ user, onClose, favPlaces, favEvents, onLogout }) {
+function ProfileScreen({ user, onClose, favPlaces, favEvents, onLogout, onToggleFavPlace, onToggleFavEvent, onSelectPlace, onSelectEvent }) {
   const name = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split("@")[0] || "Convidado";
   const email = user?.email || "Modo convidado";
   const avatar = user?.user_metadata?.avatar_url;
@@ -777,7 +677,7 @@ function ProfileScreen({ user, onClose, favPlaces, favEvents, onLogout }) {
 
 
 // ─── LIVE TAB ─────────────────────────────────────────────────────────────────
-function LiveTab({ dbPlaces, user, onSelectPlace }) {
+function LiveTab({ dbPlaces, user, onSelectPlace, onLiveCount }) {
   const [liveReports, setLiveReports] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -802,7 +702,12 @@ function LiveTab({ dbPlaces, user, onSelectPlace }) {
         .select("*")
         .order("created_at", { ascending: false })
         .limit(50);
-      if (!error && data) setLiveReports(data);
+      if (!error && data) {
+        setLiveReports(data);
+        // Count recent (last 2h)
+        const recent = data.filter(r => (Date.now() - new Date(r.created_at)) < 7200000);
+        onLiveCount?.(recent.length);
+      }
       setLoading(false);
     };
     fetchReports();
@@ -932,7 +837,7 @@ function LocationModal({ onClose, onUseGPS, locStatus }) {
 const TABS = [
   { id: "home", icon: "🌐", label: "Início" },
   { id: "festas", icon: "🎉", label: "Festas" },
-  { id: "live", icon: "🔴", label: "Ao Vivo" },
+  { id: "live", icon: "🔴", label: "Ao Vivo", badge: true },
   { id: "saved", icon: "♡", label: "Salvos" },
 ];
 
@@ -953,12 +858,20 @@ export default function App() {
   const [loadingPlaces, setLoadingPlaces] = useState(true);
   const [favPlaces, setFavPlaces] = useState([]);
   const [favEvents, setFavEvents] = useState([]);
+  const [liveCount, setLiveCount] = useState(0);
   const [userLocation, setUserLocation] = useState(null);
   const [locStatus, setLocStatus] = useState("idle");
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showLocModal, setShowLocModal] = useState(false);
   const [customLocQuery, setCustomLocQuery] = useState("");
+
+  // PWA Service Worker
+  useEffect(() => {
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").catch(() => {});
+    }
+  }, []);
 
   // Auth
   useEffect(() => {
@@ -1106,7 +1019,7 @@ export default function App() {
       {tab === "home" && (
         <div style={{ flex: 1, position: "relative", minHeight: 0, overflow: "hidden" }}>
           <div style={{ position: "absolute", inset: 0, zIndex: 1 }}>
-            <HomeMapView places={placesToShow} onSelectPlace={setSelected} onAreaChange={setAreaPlaces} userLocation={userLocation} />
+            <HomeMapView places={placesToShow} onSelectPlace={setSelected} onAreaChange={setAreaPlaces} userLocation={userLocation} activeType={filterType} />
           </div>
           <div style={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 200, padding: "20px 16px 12px", background: "linear-gradient(180deg, rgba(8,8,8,0.95) 60%, transparent)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
@@ -1198,7 +1111,17 @@ export default function App() {
           </div>
           <div style={{ position: "absolute", bottom: 80, left: 0, right: 0, zIndex: 200 }}>
             <div style={{ padding: "0 0 8px 16px", display: "flex", gap: 12, overflowX: "auto", scrollbarWidth: "none" }}>
-              {filteredAreaPlaces.map(place => {
+              {loadingPlaces ? (
+                [1,2,3].map(i => (
+                  <div key={i} style={{ flexShrink: 0, width: 228, borderRadius: 20, background: "#111", border: "1px solid #1a1a1a", overflow: "hidden" }}>
+                    <div style={{ height: 108, background: "linear-gradient(90deg, #1a1a1a 25%, #222 50%, #1a1a1a 75%)", backgroundSize: "200% 100%", animation: "shimmer 1.5s infinite" }} />
+                    <div style={{ padding: "12px 14px" }}>
+                      <div style={{ height: 16, background: "#1a1a1a", borderRadius: 6, marginBottom: 8, width: "70%" }} />
+                      <div style={{ height: 10, background: "#1a1a1a", borderRadius: 6, width: "50%" }} />
+                    </div>
+                  </div>
+                ))
+              ) : filteredAreaPlaces.map(place => {
                 const dist = userLocation ? fmtDist(haversineKm(userLocation.lat, userLocation.lng, place.lat, place.lng)) : (place.distance || "—");
                 const isFavPlace = favPlaces.some(p => p.id === place.id);
                 return (
@@ -1299,7 +1222,7 @@ export default function App() {
 
       {/* AO VIVO */}
       {tab === "live" && (
-        <LiveTab dbPlaces={dbPlaces} user={user} onSelectPlace={setSelected} />
+        <LiveTab dbPlaces={dbPlaces} user={user} onSelectPlace={setSelected} onLiveCount={setLiveCount} />
       )}
 
       {/* SALVOS */}
@@ -1327,7 +1250,7 @@ export default function App() {
                   <div style={{ width: 46, height: 46, borderRadius: 12, background: place.color + "22", border: `1px solid ${place.color}44`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0 }}>{place.type === "bar" ? "🍺" : place.type === "club" ? "🎵" : "🍽️"}</div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 15, fontWeight: 700, color: "#f5f5f5", letterSpacing: -0.3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{place.name}</div>
-                    <div style={{ fontSize: 12, color: "#555", marginTop: 2 }}>{place.distance} · {place.cover}</div>
+                    <div style={{ fontSize: 12, color: "#555", marginTop: 2 }}>{userLocation ? fmtDist(haversineKm(userLocation.lat, userLocation.lng, place.lat, place.lng)) : place.distance} · {place.cover}</div>
                   </div>
                   <button onClick={e => { e.stopPropagation(); toggleFavPlace(place); }} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 18, padding: 4 }}>❤️</button>
                 </div>
@@ -1346,13 +1269,13 @@ export default function App() {
           ) : (
             <div style={{ padding: "0 16px 100px", display: "flex", flexDirection: "column", gap: 10 }}>
               {favEvents.map(event => (
-                <div key={event.id} onClick={() => setSelectedEvent(event)} style={{ background: "#111", border: "1px solid #1a1a1a", borderRadius: 16, padding: 12, display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
-                  <div style={{ width: 46, height: 46, borderRadius: 12, background: event.gradient, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0 }}>{event.emoji}</div>
+                <div key={event.id} onClick={() => onSelectEvent?.(event)} style={{ background: "#111", border: "1px solid #1a1a1a", borderRadius: 16, padding: 12, display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
+                  <div style={{ width: 46, height: 46, borderRadius: 12, background: event.gradient || event.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0 }}>{event.emoji}</div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 15, fontWeight: 700, color: "#f5f5f5", letterSpacing: -0.3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{event.name}</div>
                     <div style={{ fontSize: 12, color: "#555", marginTop: 2 }}>{event.date} · {event.time}</div>
                   </div>
-                  <button onClick={e => { e.stopPropagation(); toggleFavEvent(event); }} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 18, padding: 4 }}>❤️</button>
+                  <button onClick={e => { e.stopPropagation(); onToggleFavEvent?.(event); }} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 18, padding: 4 }}>❤️</button>
                 </div>
               ))}
             </div>
@@ -1364,9 +1287,12 @@ export default function App() {
       <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "linear-gradient(0deg, #080808 60%, transparent)", padding: "16px 20px 24px", zIndex: 400 }}>
         <div style={{ display: "flex", background: "#111", border: "1px solid #1e1e1e", borderRadius: 16, padding: 4, gap: 4 }}>
           {TABS.map(t => (
-            <button key={t.id} onClick={() => setTab(t.id)} style={{ flex: 1, padding: "8px 0", background: tab === t.id ? "#1e1e1e" : "transparent", border: "none", borderRadius: 12, cursor: "pointer", color: tab === t.id ? "#f5f5f5" : "#555", fontSize: 11, fontWeight: 600 }}>
+            <button key={t.id} onClick={() => handleTabChange(t.id)} style={{ flex: 1, padding: "8px 0", background: tab === t.id ? "#1e1e1e" : "transparent", border: "none", borderRadius: 12, cursor: "pointer", color: tab === t.id ? "#f5f5f5" : "#555", fontSize: 11, fontWeight: 600, position: "relative" }}>
               <div style={{ fontSize: 16, marginBottom: 1 }}>{t.icon}</div>
               {t.label}
+              {t.badge && liveCount > 0 && tab !== "live" && (
+                <div style={{ position: "absolute", top: 4, right: "50%", transform: "translateX(10px)", background: "#EF4444", borderRadius: 999, minWidth: 16, height: 16, fontSize: 9, fontWeight: 800, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px" }}>{liveCount > 99 ? "99+" : liveCount}</div>
+              )}
             </button>
           ))}
         </div>
@@ -1376,7 +1302,7 @@ export default function App() {
       {selected && <PlaceDetail place={selected} onClose={() => setSelected(null)} />}
       {selectedEvent && <EventDetail event={selectedEvent} onClose={() => setSelectedEvent(null)} />}
       {showPrefs && <PreferencesModal current={prefs} onClose={() => setShowPrefs(false)} onApply={setPrefs} />}
-      {showProfile && <ProfileScreen user={user} onClose={() => setShowProfile(false)} favPlaces={favPlaces} favEvents={favEvents} onLogout={handleLogout} />}
+      {showProfile && <ProfileScreen user={user} onClose={() => setShowProfile(false)} favPlaces={favPlaces} favEvents={favEvents} onLogout={handleLogout} onToggleFavPlace={toggleFavPlace} onToggleFavEvent={toggleFavEvent} onSelectPlace={(p) => { setShowProfile(false); setSelected(p); }} onSelectEvent={(e) => { setShowProfile(false); setSelectedEvent(e); }} />}
       {showLocModal && <LocationModal onClose={() => setShowLocModal(false)} locStatus={locStatus} onUseGPS={(loc) => {
         if (loc === null) {
           // Re-request GPS
