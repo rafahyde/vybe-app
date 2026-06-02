@@ -851,6 +851,7 @@ export default function App() {
   const [showProfile, setShowProfile] = useState(false);
   const [prefs, setPrefs] = useState(null);
   const [filterEventType, setFilterEventType] = useState("Todos");
+  const [filterType, setFilterType] = useState("Todos");
   const [events, setEvents] = useState(EVENTS);
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [areaPlaces, setAreaPlaces] = useState(PLACES);
@@ -1051,7 +1052,7 @@ export default function App() {
             </div>
             <div style={{ display: "flex", gap: 6, overflowX: "auto", scrollbarWidth: "none" }}>
               {TYPES.map(t => (
-                <button key={t} onClick={() => setAreaPlaces(t === "Todos" ? placesToShow : placesToShow.filter(p => p.type === t))} style={{ flexShrink: 0, padding: "5px 12px", borderRadius: 20, background: "rgba(0,0,0,0.8)", color: "#aaa", border: "1px solid #333", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>
+                <button key={t} onClick={() => { setFilterType(t); setAreaPlaces(t === "Todos" ? placesToShow : placesToShow.filter(p => p.type === t)); }} style={{ flexShrink: 0, padding: "5px 12px", borderRadius: 20, background: filterType === t ? "rgba(167,139,250,0.2)" : "rgba(0,0,0,0.8)", color: filterType === t ? "#A78BFA" : "#aaa", border: filterType === t ? "1px solid #A78BFA55" : "1px solid #333", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>
                   {t === "Todos" ? "Todos" : typeLabel(t)}
                 </button>
               ))}
