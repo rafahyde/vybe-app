@@ -975,6 +975,8 @@ export default function App() {
   const toggleFavEvent = (event) =>
     setFavEvents(prev => prev.some(e => e.id === event.id) ? prev.filter(e => e.id !== event.id) : [...prev, event]);
 
+  const handleTabChange = (id) => { setTab(id); setShowSearch(false); setSearchQuery(""); };
+
   const activePlaces = dbPlaces.length > 0 ? dbPlaces : PLACES;
   const placesToShow = useMemo(() => {
     if (!prefs) return activePlaces;
