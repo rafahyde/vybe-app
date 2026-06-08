@@ -1084,7 +1084,7 @@ export default function App() {
   }, []);
 
   // Eventos
-  ususeEffect(() => {
+  useEffect(() => {
     const fetchEvents = async () => {
       setLoadingEvents(true);
       const now = new Date().toISOString();
