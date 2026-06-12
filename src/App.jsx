@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { supabase } from "./supabase";
 
 // ─── DATA ────────────────────────────────────────────────────────────────────
@@ -1027,7 +1027,7 @@ export default function App() {
   const [filterType, setFilterType] = useState("Todos");
   const [events, setEvents] = useState(EVENTS);
   const [loadingEvents, setLoadingEvents] = useState(true);
-  const [areaPlaces, setAreaPlaces] = useState(PLACES);
+  const [areaPlaces, setAreaPlaces] = useState([]);
   const [dbPlaces, setDbPlaces] = useState([]);
   const [loadingPlaces, setLoadingPlaces] = useState(true);
   const [favPlaces, setFavPlaces] = useState([]);
@@ -1045,10 +1045,12 @@ export default function App() {
   const [showLocModal, setShowLocModal] = useState(false);
   const [customLocQuery, setCustomLocQuery] = useState("");
 
-  // PWA Service Worker
+  // PWA Service Worker — registra só se o arquivo existir
   useEffect(() => {
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js").catch(() => {});
+      fetch("/sw.js", { method: "HEAD" })
+        .then(r => { if (r.ok) navigator.serviceWorker.register("/sw.js").catch(() => {}); })
+        .catch(() => {});
     }
   }, []);
 
@@ -1141,6 +1143,30 @@ export default function App() {
     }
   };
 
+  // ─── GPS / LOCALIZAÇÃO ───────────────────────────────────────────────────────
+  const requestGPS = () => {
+    if (!navigator.geolocation) { setLocStatus("unavailable"); return; }
+    setLocStatus("loading");
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude, firstTime: true });
+        setLocStatus("granted");
+        navigator.geolocation.watchPosition(
+          p => setUserLocation({ lat: p.coords.latitude, lng: p.coords.longitude, firstTime: false }),
+          () => {}, { enableHighAccuracy: true, maximumAge: 10000 }
+        );
+      },
+      () => setLocStatus("denied"),
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
+  const handleTabChange = (id) => {
+    setTab(id);
+    setShowSearch(false);
+    setSearchQuery("");
+  };
+
   const handleCheckin = async (placeId) => {
     if (!user) { alert("Faça login para fazer check-in!"); return; }
     const { error } = await supabase.from("checkins").insert({ user_id: user.id, place_id: placeId });
@@ -1162,7 +1188,7 @@ export default function App() {
   const toggleFavEvent = (event) =>
     setFavEvents(prev => prev.some(e => e.id === event.id) ? prev.filter(e => e.id !== event.id) : [...prev, event]);
 
-  const activePlaces = dbPlaces.length > 0 ? dbPlaces : PLACES;
+  const activePlaces = dbPlaces;
   const placesToShow = useMemo(() => {
     if (!prefs) return activePlaces;
     return activePlaces.filter(p => {
