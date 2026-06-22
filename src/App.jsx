@@ -1083,7 +1083,9 @@ export default function App() {
       setUser(u);
       // Se houver onboarding pendente (de signup com email confirmation), insere agora
       if (u) {
-        const pending = localStorage.getItem("vybe_pending_profile");
+        // Procura em sessionStorage (preferido) e localStorage (compat com versões antigas)
+        let pending = null;
+        try { pending = sessionStorage.getItem("vybe_pending_profile") || localStorage.getItem("vybe_pending_profile"); } catch {}
         if (pending) {
           try {
             const data = JSON.parse(pending);
@@ -1092,12 +1094,13 @@ export default function App() {
               ...data,
             });
             if (!error) {
-              localStorage.removeItem("vybe_pending_profile");
+              try { sessionStorage.removeItem("vybe_pending_profile"); } catch {}
+              try { localStorage.removeItem("vybe_pending_profile"); } catch {}
             } else {
-              console.error("Erro ao salvar profile pendente:", error);
+              console.error("[profile] pending save failed:", error?.code || "unknown");
             }
           } catch (e) {
-            console.error("Erro ao processar profile pendente:", e);
+            console.error("[profile] pending parse failed");
           }
         }
       }

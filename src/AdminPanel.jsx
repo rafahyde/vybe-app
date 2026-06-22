@@ -388,9 +388,16 @@ function UrlImporter({ onImported }) {
     setLoading(true);
     setMsg(null);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error("Sessão expirada. Faça login novamente.");
+      }
       const res = await fetch("/api/import-event", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({ url }),
       });
       const json = await res.json();

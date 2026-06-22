@@ -91,8 +91,15 @@ export function SignupScreen({ onClose, onSuccess }) {
     setErr(null);
     if (step === 0) {
       if (!name.trim() || name.trim().length < 2) return "Nome muito curto";
-      if (!email.includes("@") || email.length < 5) return "Email inválido";
-      if (password.length < 6) return "Senha precisa ter no mínimo 6 caracteres";
+      // Email RFC-light: aceita user@dominio.tld
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return "Email inválido";
+      if (password.length < 10) return "Senha precisa ter no mínimo 10 caracteres";
+      if (!/[A-Z]/.test(password)) return "Senha deve ter pelo menos 1 letra maiúscula";
+      if (!/[a-z]/.test(password)) return "Senha deve ter pelo menos 1 letra minúscula";
+      if (!/[0-9]/.test(password)) return "Senha deve ter pelo menos 1 número";
+      // Lista mínima de senhas óbvias
+      const commonPasswords = ["12345678", "password", "qwerty123", "abcdef123", "Password1"];
+      if (commonPasswords.includes(password)) return "Essa senha é muito comum. Escolha outra.";
       if (password !== confirmPassword) return "As senhas não coincidem";
     }
     if (step === 1) {
@@ -139,6 +146,8 @@ export function SignupScreen({ onClose, onSuccess }) {
 
       // Guarda dados de onboarding pra inserir em profiles após login
       // (necessário quando "Confirm email" está ligado e ainda não há sessão)
+      // sessionStorage em vez de localStorage — apaga ao fechar a aba,
+      // reduzindo janela de exposição se houver XSS futuro
       const onboardingData = {
         name,
         email,
@@ -146,7 +155,9 @@ export function SignupScreen({ onClose, onSuccess }) {
         city,
         fav_event_types: eventTypes,
       };
-      localStorage.setItem("vybe_pending_profile", JSON.stringify(onboardingData));
+      try {
+        sessionStorage.setItem("vybe_pending_profile", JSON.stringify(onboardingData));
+      } catch { /* storage pode estar bloqueado em modo privado */ }
 
       if (hasSession && userId) {
         // Tem sessão ativa — pode inserir profile direto
@@ -155,10 +166,11 @@ export function SignupScreen({ onClose, onSuccess }) {
           ...onboardingData,
         });
         if (profileErr) {
-          console.error("Erro ao salvar profile:", profileErr);
+          // Não loga objeto cru (pode ter PII); só código de erro
+          console.error("[profile] save failed:", profileErr?.code || "unknown");
           // Não bloqueia o signup — profile será criado no próximo login
         } else {
-          localStorage.removeItem("vybe_pending_profile");
+          try { sessionStorage.removeItem("vybe_pending_profile"); } catch {}
         }
         onSuccess?.();
       } else {
@@ -170,7 +182,8 @@ export function SignupScreen({ onClose, onSuccess }) {
     } catch (e) {
       const msg = traduzErro(e.message);
       setErr(msg);
-      console.error("Signup error:", e);
+      // Log mínimo — sem incluir email/payload no console
+      console.error("[signup] failed:", e?.code || e?.status || "unknown");
     } finally {
       setLoading(false);
     }
@@ -200,7 +213,15 @@ export function SignupScreen({ onClose, onSuccess }) {
             <input style={inputStyle} type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="voce@exemplo.com" autoComplete="email" />
 
             <label style={labelStyle}>Senha</label>
-            <input style={inputStyle} type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Mínimo 6 caracteres" autoComplete="new-password" />
+            <input style={inputStyle} type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Mín 10 chars, com maiúscula e número" autoComplete="new-password" />
+            <div style={{ fontSize: 11, color: "#666", marginTop: -8, marginBottom: 12 }}>
+              {password.length === 0 ? "Use ao menos 10 caracteres, 1 maiúscula, 1 minúscula e 1 número" :
+                password.length < 10 ? "❌ Muito curta (mín 10)" :
+                !/[A-Z]/.test(password) ? "❌ Falta letra maiúscula" :
+                !/[a-z]/.test(password) ? "❌ Falta letra minúscula" :
+                !/[0-9]/.test(password) ? "❌ Falta número" :
+                "✓ Senha forte"}
+            </div>
 
             <label style={labelStyle}>Confirmar senha</label>
             <input style={inputStyle} type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Digite a senha novamente" autoComplete="new-password" />
@@ -340,13 +361,15 @@ export function LoginEmailScreen({ onClose, onSuccess, onForgotPassword }) {
 }
 
 function traduzErro(msg) {
-  if (!msg) return "Erro desconhecido";
+  if (!msg) return "Não foi possível concluir. Tente novamente.";
   const m = msg.toLowerCase();
   if (m.includes("invalid login credentials")) return "Email ou senha incorretos";
   if (m.includes("email not confirmed")) return "Confirme seu email primeiro (verifique sua caixa de entrada)";
   if (m.includes("user already registered") || m.includes("already been registered")) return "Esse email já está cadastrado. Use 'Já tem conta? Entrar'.";
   if (m.includes("rate limit") || m.includes("too many requests") || m.includes("429")) return "Muitas tentativas. Aguarde alguns minutos.";
-  if (m.includes("weak password") || m.includes("password should be")) return "Senha muito fraca. Use ao menos 6 caracteres.";
+  if (m.includes("weak password") || m.includes("password should be") || m.includes("pwned")) return "Senha muito fraca ou comprometida. Use uma combinação diferente.";
   if (m.includes("invalid email")) return "Email inválido";
-  return "Erro: " + msg;
+  if (m.includes("captcha")) return "Verificação de segurança falhou. Recarregue a página e tente novamente.";
+  // Genérica — não vaza estrutura interna
+  return "Não foi possível concluir. Tente novamente.";
 }
