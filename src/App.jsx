@@ -1,5 +1,8 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { supabase } from "./supabase";
+import { isAdmin } from "./admin";
+import AdminPanel from "./AdminPanel";
+import { SignupScreen, LoginEmailScreen } from "./AuthScreens";
 
 // ─── DATA ────────────────────────────────────────────────────────────────────
 
@@ -667,7 +670,7 @@ function HomeMapView({ places, onSelectPlace, onAreaChange, userLocation, active
   return <div ref={mapRef} style={{ position: "absolute", inset: 0, background: "#080808" }} />;
 }
 
-function LoginScreen({ onGuest }) {
+function LoginScreen({ onGuest, onSignup, onEmailLogin }) {
   const [loading, setLoading] = useState(false);
 
   const handleGoogle = async () => {
@@ -707,6 +710,18 @@ function LoginScreen({ onGuest }) {
           <span style={{ fontSize: 10, background: "rgba(255,255,255,0.1)", padding: "2px 7px", borderRadius: 20 }}>em breve</span>
         </button>
         <button
+          onClick={onSignup}
+          style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, padding: "14px 20px", background: "linear-gradient(135deg, #A78BFA, #F472B6)", border: "none", borderRadius: 14, cursor: "pointer", fontSize: 15, fontWeight: 700, color: "#fff" }}
+        >
+          ✉️ Criar conta com email
+        </button>
+        <button
+          onClick={onEmailLogin}
+          style={{ padding: "12px 20px", background: "transparent", border: "none", color: "#A78BFA", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+        >
+          Já tem conta? Entrar
+        </button>
+        <button
           onClick={onGuest}
           style={{ marginTop: 8, padding: "12px 20px", background: "transparent", border: "1px solid #222", borderRadius: 14, cursor: "pointer", fontSize: 14, fontWeight: 600, color: "#666" }}
           onMouseEnter={e => { e.currentTarget.style.color = "#aaa"; e.currentTarget.style.borderColor = "#444"; }}
@@ -718,7 +733,7 @@ function LoginScreen({ onGuest }) {
   );
 }
 
-function ProfileScreen({ user, onClose, favPlaces, favEvents, onLogout, onToggleFavPlace, onToggleFavEvent, onSelectPlace, onSelectEvent }) {
+function ProfileScreen({ user, onClose, favPlaces, favEvents, onLogout, onToggleFavPlace, onToggleFavEvent, onSelectPlace, onSelectEvent, onOpenAdmin, userIsAdmin }) {
   const name = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split("@")[0] || "Convidado";
   const email = user?.email || "Modo convidado";
   const avatar = user?.user_metadata?.avatar_url;
@@ -778,6 +793,11 @@ function ProfileScreen({ user, onClose, favPlaces, favEvents, onLogout, onToggle
             </div>
           ))}
         </div>
+        {userIsAdmin && (
+          <button onClick={onOpenAdmin} style={{ marginTop: 8, padding: 16, background: "#0f0a1a", border: "1px solid #A78BFA55", borderRadius: 14, color: "#A78BFA", fontSize: 14, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+            ⚙️ Painel Admin
+          </button>
+        )}
         <button onClick={onLogout} style={{ marginTop: 8, padding: 16, background: "#1a0a0a", border: "1px solid #EF444433", borderRadius: 14, color: "#EF4444", fontSize: 14, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
           🚪 Sair da conta
         </button>
@@ -1022,6 +1042,8 @@ export default function App() {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [showPrefs, setShowPrefs] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [showAdmin, setShowAdmin] = useState(false);
+  const [authScreen, setAuthScreen] = useState(null); // null | "signup" | "login"
   const [prefs, setPrefs] = useState(null);
   const [filterEventType, setFilterEventType] = useState("Todos");
   const [filterType, setFilterType] = useState("Todos");
@@ -1056,12 +1078,33 @@ export default function App() {
 
   // Auth
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
+    const handleSession = async (session) => {
+      const u = session?.user ?? null;
+      setUser(u);
+      // Se houver onboarding pendente (de signup com email confirmation), insere agora
+      if (u) {
+        const pending = localStorage.getItem("vybe_pending_profile");
+        if (pending) {
+          try {
+            const data = JSON.parse(pending);
+            const { error } = await supabase.from("profiles").upsert({
+              id: u.id,
+              ...data,
+            });
+            if (!error) {
+              localStorage.removeItem("vybe_pending_profile");
+            } else {
+              console.error("Erro ao salvar profile pendente:", error);
+            }
+          } catch (e) {
+            console.error("Erro ao processar profile pendente:", e);
+          }
+        }
+      }
+    };
+
+    supabase.auth.getSession().then(({ data: { session } }) => handleSession(session));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => handleSession(session));
     return () => subscription.unsubscribe();
   }, []);
 
@@ -1260,7 +1303,19 @@ export default function App() {
   }
 
   if (user === null && !guest) {
-    return <LoginScreen onGuest={() => setGuest(true)} />;
+    if (authScreen === "signup") {
+      return <SignupScreen onClose={() => setAuthScreen(null)} onSuccess={() => setAuthScreen(null)} />;
+    }
+    if (authScreen === "login") {
+      return <LoginEmailScreen onClose={() => setAuthScreen(null)} onSuccess={() => setAuthScreen(null)} />;
+    }
+    return (
+      <LoginScreen
+        onGuest={() => setGuest(true)}
+        onSignup={() => setAuthScreen("signup")}
+        onEmailLogin={() => setAuthScreen("login")}
+      />
+    );
   }
 
   return (
@@ -1561,7 +1616,8 @@ export default function App() {
       {selected && <PlaceDetail place={selected} onClose={() => setSelected(null)} />}
       {selectedEvent && <EventDetail event={selectedEvent} onClose={() => setSelectedEvent(null)} />}
       {showPrefs && <PreferencesModal current={prefs} onClose={() => setShowPrefs(false)} onApply={setPrefs} />}
-      {showProfile && <ProfileScreen user={user} onClose={() => setShowProfile(false)} favPlaces={favPlaces} favEvents={favEvents} onLogout={handleLogout} onToggleFavPlace={toggleFavPlace} onToggleFavEvent={toggleFavEvent} onSelectPlace={(p) => { setShowProfile(false); setSelected(p); }} onSelectEvent={(e) => { setShowProfile(false); setSelectedEvent(e); }} />}
+      {showProfile && <ProfileScreen user={user} onClose={() => setShowProfile(false)} favPlaces={favPlaces} favEvents={favEvents} onLogout={handleLogout} onToggleFavPlace={toggleFavPlace} onToggleFavEvent={toggleFavEvent} onSelectPlace={(p) => { setShowProfile(false); setSelected(p); }} onSelectEvent={(e) => { setShowProfile(false); setSelectedEvent(e); }} onOpenAdmin={() => { setShowProfile(false); setShowAdmin(true); }} userIsAdmin={isAdmin(user)} />}
+      {showAdmin && isAdmin(user) && <AdminPanel onClose={() => setShowAdmin(false)} />}
       {showLocModal && <LocationModal onClose={() => setShowLocModal(false)} locStatus={locStatus} onUseGPS={(loc) => {
         if (loc === null) {
           // Re-request GPS

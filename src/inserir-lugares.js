@@ -1,9 +1,17 @@
+// Script local para popular a tabela `places` no Supabase.
+// Rodar com: node --env-file=.env src/inserir-lugares.js
+// NUNCA commitar a chave service_role — ela bypassa RLS e dá acesso total ao DB.
+
 import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient(
-  "https://aicyggsnmmjqefqeldlb.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpY3lnZ3NubW1qcWVmcWVsZGxiIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3OTMwMDA4OCwiZXhwIjoyMDk0ODc2MDg4fQ.blXLCw9YMGGUxpOWdpeMJug7mV1KZTVKcodyZ9hMtYc" // substitui pela sua chave service_role
-);
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
+  throw new Error("Defina VITE_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY no .env");
+}
+
+const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
 const PLACES = [
   {
