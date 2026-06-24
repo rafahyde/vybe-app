@@ -374,6 +374,113 @@ function ItemList({ table, items, onDeleted, getLabel, getSubtitle }) {
   );
 }
 
+// ─── IMPORTADOR DE LUGARES (Google Places) ───────────────────────────────
+function PlacesImporter({ onImported }) {
+  // Presets de áreas em SJC
+  const PRESETS = [
+    { label: "Centro", lat: -23.1825, lng: -45.8859, radius: 1500 },
+    { label: "Vila Adyana / Esplanada", lat: -23.1955, lng: -45.8907, radius: 2000 },
+    { label: "Jd das Indústrias", lat: -23.2295, lng: -45.8636, radius: 2000 },
+    { label: "Urbanova", lat: -23.2127, lng: -45.9522, radius: 2500 },
+    { label: "Cidade inteira (10km)", lat: -23.190, lng: -45.885, radius: 10000 },
+  ];
+  const [lat, setLat] = useState(-23.1825);
+  const [lng, setLng] = useState(-45.8859);
+  const [radius, setRadius] = useState(1500);
+  const [type, setType] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [msg, setMsg] = useState(null);
+
+  const handleImport = async () => {
+    setLoading(true);
+    setMsg(null);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error("Sessão expirada");
+      const res = await fetch("/api/import-places", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ lat, lng, radius, type: type || undefined }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Falha");
+      setMsg({
+        type: "ok",
+        text: `✅ ${json.inserted} novos / ${json.skipped} já existiam (de ${json.total_found} encontrados)`,
+      });
+      onImported?.();
+    } catch (e) {
+      setMsg({ type: "err", text: e.message });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ padding: 14, background: "#0f0f1a", border: "1px solid #2a1e3e", borderRadius: 12, marginBottom: 20 }}>
+      <div style={{ fontSize: 13, fontWeight: 700, color: "#A78BFA", marginBottom: 8 }}>🗺️ Importar lugares (Google Places)</div>
+      <div style={{ fontSize: 11, color: "#777", marginBottom: 10 }}>Busca bares/baladas/restaurantes numa área. Idempotente (não duplica).</div>
+
+      <label style={labelStyle}>Área pré-definida</label>
+      <select
+        style={inputStyle}
+        onChange={(e) => {
+          const p = PRESETS[parseInt(e.target.value, 10)];
+          if (p) {
+            setLat(p.lat);
+            setLng(p.lng);
+            setRadius(p.radius);
+          }
+        }}
+      >
+        {PRESETS.map((p, i) => (
+          <option key={p.label} value={i}>{p.label} ({(p.radius / 1000).toFixed(1)}km)</option>
+        ))}
+      </select>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+        <div>
+          <label style={labelStyle}>Lat</label>
+          <input style={inputStyle} type="number" step="0.0001" value={lat} onChange={(e) => setLat(parseFloat(e.target.value))} />
+        </div>
+        <div>
+          <label style={labelStyle}>Lng</label>
+          <input style={inputStyle} type="number" step="0.0001" value={lng} onChange={(e) => setLng(parseFloat(e.target.value))} />
+        </div>
+        <div>
+          <label style={labelStyle}>Raio (m)</label>
+          <input style={inputStyle} type="number" value={radius} onChange={(e) => setRadius(parseInt(e.target.value, 10))} />
+        </div>
+      </div>
+
+      <label style={labelStyle}>Tipo (vazio = todos)</label>
+      <select style={inputStyle} value={type} onChange={(e) => setType(e.target.value)}>
+        <option value="">Todos (bar + club + restaurant)</option>
+        <option value="bar">Só bares</option>
+        <option value="night_club">Só baladas</option>
+        <option value="restaurant">Só restaurantes</option>
+      </select>
+
+      <button
+        onClick={handleImport}
+        disabled={loading}
+        style={{ ...primaryBtn, opacity: loading ? 0.5 : 1 }}
+      >
+        {loading ? "Buscando no Google..." : "🗺️ Importar agora"}
+      </button>
+
+      {msg && (
+        <div style={{ padding: 10, marginTop: 8, borderRadius: 8, fontSize: 13, background: msg.type === "ok" ? "#0a2818" : "#2a1010", color: msg.type === "ok" ? "#22C55E" : "#ff6b6b" }}>
+          {msg.text}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── IMPORTADOR DE URL ───────────────────────────────────────────────────
 function UrlImporter({ onImported }) {
   const [url, setUrl] = useState("");
@@ -480,6 +587,7 @@ export default function AdminPanel({ onClose }) {
 
         {section === "places" && (
           <>
+            <PlacesImporter onImported={reload} />
             <div style={sectionTitle}>➕ Adicionar lugar</div>
             <PlaceForm onSaved={reload} />
             <div style={sectionTitle}>📍 Lugares existentes</div>
