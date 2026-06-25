@@ -32,6 +32,39 @@ const TYPE_COLORS = {
   restaurant: "#F59E0B",
 };
 
+// Converte horários do Google Places (weekdayDescriptions) pro formato {seg: "18:00-02:00", ter: "fechado", ...}
+const DAY_MAP_PT = {
+  "segunda-feira": "seg", "segunda": "seg", "monday": "seg",
+  "terça-feira": "ter", "terça": "ter", "tuesday": "ter",
+  "quarta-feira": "qua", "quarta": "qua", "wednesday": "qua",
+  "quinta-feira": "qui", "quinta": "qui", "thursday": "qui",
+  "sexta-feira": "sex", "sexta": "sex", "friday": "sex",
+  "sábado": "sab", "saturday": "sab",
+  "domingo": "dom", "sunday": "dom",
+};
+
+function parseGoogleHours(regularOpeningHours) {
+  if (!regularOpeningHours?.weekdayDescriptions) return null;
+  const out = {};
+  for (const line of regularOpeningHours.weekdayDescriptions) {
+    // Ex: "segunda-feira: 18:00 – 02:00" ou "terça-feira: Fechado"
+    const m = line.match(/^([^:]+):\s*(.+)$/);
+    if (!m) continue;
+    const dayName = m[1].toLowerCase().trim();
+    const value = m[2].trim();
+    const dayKey = DAY_MAP_PT[dayName];
+    if (!dayKey) continue;
+    if (/fechado|closed/i.test(value)) {
+      out[dayKey] = "fechado";
+    } else {
+      // Normaliza "18:00 – 02:00" → "18:00-02:00"
+      const hours = value.replace(/[–—−]/g, "-").replace(/\s+/g, "").replace(",", "; ");
+      out[dayKey] = hours;
+    }
+  }
+  return Object.keys(out).length > 0 ? out : null;
+}
+
 // Rate limit simples por IP
 const rateLimitStore = new Map();
 function checkRateLimit(ip) {
@@ -177,8 +210,11 @@ export default async function handler(req, res) {
     }
 
     // Imagem: photoreference do Google (URL precisa de API key — não armazenamos)
-    // Por enquanto deixa null; pode ser enriquecido depois
     const imageUrl = null;
+
+    // Converte regularOpeningHours.weekdayDescriptions pro formato {seg: "18:00-02:00"}
+    // Google retorna ex: ["segunda-feira: 18:00 – 02:00", "terça-feira: fechado", ...]
+    const hours = parseGoogleHours(p.regularOpeningHours);
 
     return {
       google_place_id: p.id,
@@ -194,16 +230,18 @@ export default async function handler(req, res) {
       color: TYPE_COLORS[ourType] || "#A78BFA",
       tags: (p.types || []).filter((t) => !["point_of_interest", "establishment", "food"].includes(t)).slice(0, 5),
       image_url: imageUrl,
+      hours,
       reports: [],
       source: "google_places",
       imported_at: new Date().toISOString(),
     };
   }).filter((r) => r.lat && r.lng); // remove sem coordenadas
 
-  // Upsert em batch — onConflict no google_place_id evita duplicar
+  // Upsert em batch — onConflict no google_place_id ATUALIZA campos do Google
+  // (mantém crowd, reports e customizações manuais via merge implícito)
   const { data: inserted, error: insertErr } = await supabase
     .from("places")
-    .upsert(rows, { onConflict: "google_place_id", ignoreDuplicates: true })
+    .upsert(rows, { onConflict: "google_place_id", ignoreDuplicates: false })
     .select("id, name, google_place_id");
 
   if (insertErr) {

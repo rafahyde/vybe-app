@@ -407,7 +407,7 @@ function EventCard({ event, onClick, isFav, onToggleFav }) {
           {event.lineup.map(a => <span key={a} style={{ fontSize: 11, padding: "3px 10px", borderRadius: 20, background: event.color + "22", color: event.color, border: `1px solid ${event.color}44`, fontWeight: 600 }}>{a}</span>)}
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <span style={{ fontSize: 12, color: "#555" }}>👥 {event.confirmed} confirmados</span>
+          <div />
           <div style={{ background: event.color, color: "#000", fontSize: 12, fontWeight: 800, padding: "6px 16px", borderRadius: 20 }}>
             A partir de {event.tickets.find(t => t.available)?.price ?? "—"}
           </div>
@@ -432,7 +432,6 @@ function EventDetail({ event, onClose, isFav, onToggleFav, handleShare }) {
             <span style={{ fontSize: 13, color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>🕐 {event.time}</span>
           </div>
           <div style={{ fontSize: 12, color: "rgba(255,255,255,0.75)", marginTop: 4 }}>📍 {event.location}</div>
-          <div style={{ fontSize: 13, color: "rgba(255,255,255,0.85)", marginTop: 6, fontWeight: 600 }}>👥 {event.confirmed} confirmados</div>
         </div>
         <div style={{ padding: "16px 20px", borderBottom: "1px solid #1a1a1a" }}>
           <h4 style={{ margin: "0 0 8px", fontSize: 11, color: "#555", fontFamily: "'JetBrains Mono', ui-monospace, monospace", letterSpacing: "0.08em" }}>SOBRE O EVENTO</h4>
@@ -629,10 +628,13 @@ function HomeMapView({ places, onSelectPlace, onAreaChange, userLocation, active
         const zoom = map.getZoom();
         const visible = placesRef.current.filter(p => bounds.contains([p.lat, p.lng]));
         onAreaRef.current(visible.length > 0 ? visible : placesRef.current);
-        // Show/hide pins based on zoom level
+        // Show/hide pins based on zoom level (mais zoom = menos poluição)
         markersRef.current.forEach(m => {
           const el = m.getElement();
-          if (el) el.style.opacity = zoom >= 12 ? "1" : "0";
+          if (el) {
+            el.style.opacity = zoom >= 14 ? "1" : "0";
+            el.style.pointerEvents = zoom >= 14 ? "auto" : "none";
+          }
         });
       };
 
@@ -1111,23 +1113,34 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Geolocalização — pede permissão automaticamente ao abrir
+  // Geolocalização — pede ao abrir, usa cache se disponível pra resposta instantânea
   useEffect(() => {
     if (!navigator.geolocation) return;
     setLocStatus("loading");
+    // Primeira tentativa: rápida e usa cache de até 5min (resposta quase instantânea se já tem)
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude, firstTime: true });
         setLocStatus("granted");
-        // Atualiza posição em tempo real
+        // Watch contínuo pra atualizar enquanto se move
         navigator.geolocation.watchPosition(
           (p) => setUserLocation({ lat: p.coords.latitude, lng: p.coords.longitude, firstTime: false }),
           () => {},
           { enableHighAccuracy: true, maximumAge: 10000 }
         );
       },
-      () => setLocStatus("denied"),
-      { enableHighAccuracy: true, timeout: 10000 }
+      // Fallback: tenta de novo com alta precisão se cache rápido falhou
+      () => {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude, firstTime: true });
+            setLocStatus("granted");
+          },
+          () => setLocStatus("denied"),
+          { enableHighAccuracy: true, timeout: 10000 }
+        );
+      },
+      { enableHighAccuracy: false, maximumAge: 300000, timeout: 3000 }
     );
   }, []);
 
@@ -1334,12 +1347,6 @@ export default function App() {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
               <h1 style={{ margin: 0, fontSize: 26, fontWeight: 900, background: "linear-gradient(90deg, #A78BFA, #F472B6, #FF6B6B)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>vybe.</h1>
               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                {/* Indicador de localização */}
-                <button onClick={() => setShowLocModal(true)} style={{ background: "rgba(0,0,0,0.8)", border: `1px solid ${locStatus === "granted" ? "#60A5FA55" : "#333"}`, borderRadius: 20, padding: "5px 12px", fontSize: 11, color: locStatus === "granted" ? "#60A5FA" : "#aaa", display: "flex", alignItems: "center", gap: 5, cursor: "pointer" }}>
-                  {locStatus === "loading" ? "📡" : "📍"}
-                  {locStatus === "granted" ? "Você aqui" : "SJC, SP"}
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 9l6 6 6-6"/></svg>
-                </button>
                 <button
                   onClick={() => setShowPrefs(true)}
                   style={{ background: "rgba(0,0,0,0.8)", border: `1px solid ${prefs ? "#A78BFA88" : "#333"}`, borderRadius: 20, padding: "5px 10px", fontSize: 13, cursor: "pointer", color: prefs ? "#A78BFA" : "#aaa", lineHeight: 1 }}
