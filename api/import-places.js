@@ -253,8 +253,19 @@ export default async function handler(req, res) {
     await runWithConcurrency(photoTasks, 5);
   }
 
+  // Dedupe: mesmo lugar pode vir em mais de uma busca (bar + night_club)
+  // Postgres ON CONFLICT só aceita 1 linha por google_place_id no mesmo batch
+  const dedupedMap = new Map();
+  for (const r of rows) {
+    if (!r.google_place_id) continue;
+    if (!dedupedMap.has(r.google_place_id)) {
+      dedupedMap.set(r.google_place_id, r);
+    }
+  }
+  const deduped = Array.from(dedupedMap.values());
+
   // Remove o campo temporário _photoRef antes de inserir
-  const cleanRows = rows.map(({ _photoRef, ...rest }) => rest);
+  const cleanRows = deduped.map(({ _photoRef, ...rest }) => rest);
 
   // Upsert em batch — onConflict no google_place_id ATUALIZA campos do Google
   const { data: inserted, error: insertErr } = await supabase
