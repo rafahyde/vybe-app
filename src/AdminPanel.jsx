@@ -388,6 +388,7 @@ function PlacesImporter({ onImported }) {
   const [lng, setLng] = useState(-45.8859);
   const [radius, setRadius] = useState(1500);
   const [type, setType] = useState("");
+  const [withPhotos, setWithPhotos] = useState(true);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState(null);
 
@@ -403,13 +404,14 @@ function PlacesImporter({ onImported }) {
           "Content-Type": "application/json",
           Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ lat, lng, radius, type: type || undefined }),
+        body: JSON.stringify({ lat, lng, radius, type: type || undefined, withPhotos }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "Falha");
+      const photoTxt = json.photos_downloaded ? ` · ${json.photos_downloaded} fotos baixadas` : "";
       setMsg({
         type: "ok",
-        text: `✅ ${json.inserted} novos / ${json.skipped} já existiam (de ${json.total_found} encontrados)`,
+        text: `✅ ${json.inserted} novos / ${json.skipped} já existiam (de ${json.total_found} encontrados)${photoTxt}`,
       });
       onImported?.();
     } catch (e) {
@@ -464,12 +466,17 @@ function PlacesImporter({ onImported }) {
         <option value="restaurant">Só restaurantes</option>
       </select>
 
+      <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#999", marginBottom: 12, cursor: "pointer" }}>
+        <input type="checkbox" checked={withPhotos} onChange={(e) => setWithPhotos(e.target.checked)} />
+        Baixar fotos automaticamente (+$0.007 por foto)
+      </label>
+
       <button
         onClick={handleImport}
         disabled={loading}
         style={{ ...primaryBtn, opacity: loading ? 0.5 : 1 }}
       >
-        {loading ? "Buscando no Google..." : "🗺️ Importar agora"}
+        {loading ? (withPhotos ? "Importando + baixando fotos..." : "Buscando no Google...") : "🗺️ Importar agora"}
       </button>
 
       {msg && (

@@ -1,9 +1,11 @@
 // Vercel Function — bulk import de lugares via Google Places API (New)
-// POST { lat, lng, radius, type? }   Auth: Bearer <admin_jwt>
+// POST { lat, lng, radius, type?, withPhotos? }   Auth: Bearer <admin_jwt>
 // Retorna: { inserted, skipped, errors, places: [...] }
 //
 // Env vars: GOOGLE_PLACES_API_KEY, VITE_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
-//   (service role necessária pra bypass RLS no insert em batch)
+//
+// Estende timeout pra Pro Vercel (default 10s no hobby, 60s aqui é seguro)
+export const config = { maxDuration: 60 };
 
 import { createClient } from "@supabase/supabase-js";
 
@@ -124,7 +126,7 @@ export default async function handler(req, res) {
   }
 
   // VALIDAÇÃO INPUT
-  const { lat, lng, radius = 3000, type } = req.body || {};
+  const { lat, lng, radius = 3000, type, withPhotos = true } = req.body || {};
   if (typeof lat !== "number" || lat < -90 || lat > 90) {
     return res.status(400).json({ error: "lat inválido" });
   }
@@ -209,12 +211,9 @@ export default async function handler(req, res) {
       ourType = "restaurant";
     }
 
-    // Imagem: photoreference do Google (URL precisa de API key — não armazenamos)
-    const imageUrl = null;
-
-    // Converte regularOpeningHours.weekdayDescriptions pro formato {seg: "18:00-02:00"}
-    // Google retorna ex: ["segunda-feira: 18:00 – 02:00", "terça-feira: fechado", ...]
     const hours = parseGoogleHours(p.regularOpeningHours);
+    // Guarda a referência da primeira foto pra baixar depois (em outra etapa)
+    const photoRef = p.photos?.[0]?.name || null;
 
     return {
       google_place_id: p.id,
@@ -229,20 +228,39 @@ export default async function handler(req, res) {
       cover: p.priceLevel === "PRICE_LEVEL_FREE" ? "Grátis" : "Consultar",
       color: TYPE_COLORS[ourType] || "#A78BFA",
       tags: (p.types || []).filter((t) => !["point_of_interest", "establishment", "food"].includes(t)).slice(0, 5),
-      image_url: imageUrl,
+      image_url: null, // preenchido depois pelo downloadPhotos
       hours,
       reports: [],
       source: "google_places",
       imported_at: new Date().toISOString(),
+      _photoRef: photoRef, // campo temporário, removido antes do insert
     };
   }).filter((r) => r.lat && r.lng); // remove sem coordenadas
 
+  // Baixa fotos em paralelo (concorrência limitada) ANTES do upsert
+  let photosDownloaded = 0;
+  if (withPhotos) {
+    const photoTasks = rows
+      .filter((r) => r._photoRef)
+      .map((r) => async () => {
+        const url = await downloadAndStorePhoto(r._photoRef, r.google_place_id, supabase);
+        if (url) {
+          r.image_url = url;
+          photosDownloaded += 1;
+        }
+      });
+    // Roda 5 por vez pra não estourar timeout nem rate limit do Google
+    await runWithConcurrency(photoTasks, 5);
+  }
+
+  // Remove o campo temporário _photoRef antes de inserir
+  const cleanRows = rows.map(({ _photoRef, ...rest }) => rest);
+
   // Upsert em batch — onConflict no google_place_id ATUALIZA campos do Google
-  // (mantém crowd, reports e customizações manuais via merge implícito)
   const { data: inserted, error: insertErr } = await supabase
     .from("places")
-    .upsert(rows, { onConflict: "google_place_id", ignoreDuplicates: false })
-    .select("id, name, google_place_id");
+    .upsert(cleanRows, { onConflict: "google_place_id", ignoreDuplicates: false })
+    .select("id, name, google_place_id, image_url");
 
   if (insertErr) {
     console.error("[import-places] insert error:", insertErr);
@@ -251,9 +269,78 @@ export default async function handler(req, res) {
 
   return res.status(200).json({
     inserted: inserted?.length || 0,
-    skipped: rows.length - (inserted?.length || 0),
-    total_found: rows.length,
+    skipped: cleanRows.length - (inserted?.length || 0),
+    total_found: cleanRows.length,
+    photos_downloaded: photosDownloaded,
     errors,
     places: inserted || [],
   });
+}
+
+// Baixa 1 foto do Google Places e faz upload no Storage. Retorna URL pública ou null.
+async function downloadAndStorePhoto(photoName, placeId, supabase) {
+  try {
+    const photoUrl = `https://places.googleapis.com/v1/${photoName}/media?maxWidthPx=800&skipHttpRedirect=true`;
+    const photoRes = await fetch(photoUrl, {
+      headers: { "X-Goog-Api-Key": process.env.GOOGLE_PLACES_API_KEY },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!photoRes.ok) {
+      console.warn(`[photos] ${placeId}: status ${photoRes.status}`);
+      return null;
+    }
+    // Resposta vem como JSON com photoUri (URL temporária assinada)
+    const photoJson = await photoRes.json();
+    const signedUrl = photoJson.photoUri;
+    if (!signedUrl) return null;
+
+    // Baixa a imagem em si
+    const imgRes = await fetch(signedUrl, { signal: AbortSignal.timeout(8000) });
+    if (!imgRes.ok) return null;
+    const buf = Buffer.from(await imgRes.arrayBuffer());
+
+    // Tamanho máximo: 2MB
+    if (buf.length > 2 * 1024 * 1024) {
+      console.warn(`[photos] ${placeId}: too big (${buf.length})`);
+      return null;
+    }
+
+    // Upload pro Storage (overwrite se já existe)
+    const filename = `${placeId}.jpg`;
+    const { error: uploadErr } = await supabase.storage
+      .from("place-photos")
+      .upload(filename, buf, {
+        contentType: "image/jpeg",
+        upsert: true,
+        cacheControl: "31536000", // 1 ano
+      });
+
+    if (uploadErr) {
+      console.error(`[photos] ${placeId} upload:`, uploadErr.message);
+      return null;
+    }
+
+    // URL pública (bucket é público)
+    const { data: pub } = supabase.storage.from("place-photos").getPublicUrl(filename);
+    return pub.publicUrl;
+  } catch (e) {
+    console.warn(`[photos] ${placeId}: ${e.message}`);
+    return null;
+  }
+}
+
+// Roda N tarefas async com concorrência limitada
+async function runWithConcurrency(tasks, limit) {
+  const queue = [...tasks];
+  const running = new Set();
+  async function next() {
+    if (queue.length === 0) return;
+    const task = queue.shift();
+    const p = task().finally(() => running.delete(p));
+    running.add(p);
+    if (running.size >= limit) await Promise.race(running);
+    return next();
+  }
+  await next();
+  await Promise.all(running);
 }
