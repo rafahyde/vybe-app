@@ -109,14 +109,19 @@ function eventExpiry(e) {
     const start = new Date(e.starts_at);
     if (!isNaN(start.getTime())) return start.getTime() + 7 * 3600 * 1000;
   }
-  // Preferência 2: campo date (YYYY-MM-DD ou DD/MM/YYYY) → fim do dia + 6h
+  // Preferência 2: campo date em vários formatos → fim do dia + 6h
   if (e.date) {
     let iso = null;
-    if (/^\d{4}-\d{2}-\d{2}$/.test(e.date)) {
-      iso = e.date;
-    } else {
-      const br = e.date.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-      if (br) iso = `${br[3]}-${br[2]}-${br[1]}`;
+    const ymd = e.date.match(/(\d{4})-(\d{2})-(\d{2})/);           // 2026-06-24
+    const dmy = e.date.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);     // 24/06/2026
+    const dm = e.date.match(/(\d{1,2})\/(\d{1,2})(?!\d|\/)/);      // "Sáb, 23/05" (sem ano → assume ano atual)
+    if (ymd) {
+      iso = `${ymd[1]}-${ymd[2]}-${ymd[3]}`;
+    } else if (dmy) {
+      iso = `${dmy[3]}-${dmy[2].padStart(2, "0")}-${dmy[1].padStart(2, "0")}`;
+    } else if (dm) {
+      const year = new Date().getFullYear();
+      iso = `${year}-${dm[2].padStart(2, "0")}-${dm[1].padStart(2, "0")}`;
     }
     if (iso) {
       const end = new Date(`${iso}T23:59:59-03:00`);
