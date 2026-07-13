@@ -958,20 +958,22 @@ function LiveTab({ dbPlaces, user, onSelectPlace, onLiveCount }) {
     return Math.floor(diff/86400) + "d atrás";
   };
 
+  const REPORT_TTL_MS = 4 * 3600 * 1000; // relatos expiram após 4 horas
+
   useEffect(() => {
-    // Fetch initial reports
+    // Fetch initial reports — só das últimas 4h
     const fetchReports = async () => {
       setLoading(true);
+      const fourHoursAgo = new Date(Date.now() - REPORT_TTL_MS).toISOString();
       const { data, error } = await supabase
         .from("reports")
         .select("*")
+        .gte("created_at", fourHoursAgo)
         .order("created_at", { ascending: false })
         .limit(50);
       if (!error && data) {
         setLiveReports(data);
-        // Count recent (last 2h)
-        const recent = data.filter(r => (Date.now() - new Date(r.created_at)) < 7200000);
-        onLiveCount?.(recent.length);
+        onLiveCount?.(data.length);
       }
       setLoading(false);
     };
@@ -985,21 +987,19 @@ function LiveTab({ dbPlaces, user, onSelectPlace, onLiveCount }) {
       })
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    // Remove relatos expirados em tempo real (checa a cada minuto)
+    const pruneTimer = setInterval(() => {
+      setLiveReports(prev => {
+        const alive = prev.filter(r => Date.now() - new Date(r.created_at).getTime() < REPORT_TTL_MS);
+        return alive.length === prev.length ? prev : alive;
+      });
+    }, 60_000);
+
+    return () => { supabase.removeChannel(channel); clearInterval(pruneTimer); };
   }, []);
 
-  const allReports = [
-    ...liveReports,
-    ...dbPlaces.flatMap(p => (p.reports || []).map(r => ({
-      id: `local-${p.id}-${r.user}`,
-      place_id: p.id,
-      user_name: r.user,
-      user_avatar: r.avatar,
-      msg: r.msg,
-      mood: r.mood,
-      created_at: new Date(Date.now() - Math.random() * 3600000).toISOString(),
-    })))
-  ];
+  // Só relatos reais do banco — sem seeds fake
+  const allReports = liveReports;
 
   return (
     <div style={{ flex: 1, overflow: "auto", padding: "20px 16px 100px" }}>
@@ -1308,32 +1308,63 @@ export default function App() {
     return () => clearInterval(timer);
   }, []);
 
-   // Busca lugares do Supabase
+   // Busca lugares do Supabase + crowd dinâmico baseado em atividade real
   useEffect(() => {
+    let cancelled = false;
+    // Base de lugares sem crowd — o crowd é sempre calculado, nunca vem do banco
+    const placesBaseRef = { current: [] };
+
+    // Crowd = relatos/check-ins da última hora × 25%, teto 100%
+    // 0 relatos = vazio · 1 = 25% · 2 = 50% · 3 = 75% (agitado) · 4+ = 100% (lotado)
+    const computeCrowds = async () => {
+      if (placesBaseRef.current.length === 0) return;
+      const oneHourAgo = new Date(Date.now() - 3600_000).toISOString();
+      const { data: recent } = await supabase
+        .from("reports").select("place_id").gte("created_at", oneHourAgo);
+      const counts = {};
+      (recent || []).forEach(r => { counts[r.place_id] = (counts[r.place_id] || 0) + 1; });
+      const withCrowd = placesBaseRef.current.map(p => ({
+        ...p,
+        crowd: Math.min(100, (counts[p.id] || 0) * 25),
+      }));
+      if (cancelled) return;
+      setDbPlaces(withCrowd);
+      setAreaPlaces(withCrowd);
+      // "Bombando agora" — top 3 com mais atividade na última hora
+      const bombando = withCrowd
+        .filter(p => counts[p.id])
+        .sort((a, b) => (counts[b.id] || 0) - (counts[a.id] || 0))
+        .slice(0, 3);
+      setBombandoPlaces(bombando);
+    };
+
     const fetchPlaces = async () => {
       setLoadingPlaces(true);
       const { data, error } = await supabase.from("places").select("*");
       if (!error && data && data.length > 0) {
-        const normalized = data.map(normalizePlace).filter(Boolean);
-        setDbPlaces(normalized);
-        setAreaPlaces(normalized);
-        // Calcular "Bombando agora" — top 3 com reports nas últimas 2h
-        const twoHoursAgo = new Date(Date.now() - 7200000).toISOString();
-        const { data: recentReports } = await supabase
-          .from("reports").select("place_id").gte("created_at", twoHoursAgo);
-        if (recentReports?.length > 0) {
-          const counts = {};
-          recentReports.forEach(r => { counts[r.place_id] = (counts[r.place_id] || 0) + 1; });
-          const bombando = normalized
-            .filter(p => counts[p.id])
-            .sort((a, b) => (counts[b.id] || 0) - (counts[a.id] || 0))
-            .slice(0, 3);
-          setBombandoPlaces(bombando);
-        }
+        placesBaseRef.current = data.map(normalizePlace).filter(Boolean);
+        await computeCrowds();
       }
       setLoadingPlaces(false);
     };
     fetchPlaces();
+
+    // Recalcula toda hora
+    const hourlyTimer = setInterval(computeCrowds, 3600_000);
+
+    // Recalcula na hora quando alguém publica um relato
+    const crowdChannel = supabase
+      .channel("crowd-updates")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "reports" }, () => {
+        computeCrowds();
+      })
+      .subscribe();
+
+    return () => {
+      cancelled = true;
+      clearInterval(hourlyTimer);
+      supabase.removeChannel(crowdChannel);
+    };
   }, []);
 
   const handleShare = async (title, url, text) => {
