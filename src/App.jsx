@@ -3,6 +3,7 @@ import { supabase } from "./supabase";
 import { isAdmin } from "./admin";
 import AdminPanel from "./AdminPanel";
 import { SignupScreen, LoginEmailScreen } from "./AuthScreens";
+import { PRIVACY_POLICY_URL, COOKIE_POLICY_URL, TERMS_URL, SUPPORT_EMAIL } from "./legal";
 
 // ─── DATA ────────────────────────────────────────────────────────────────────
 
@@ -97,6 +98,35 @@ function normalizeEvent(e) {
     price_text: e.price_text || "", source: e.source || "manual",
   };
 }
+
+// ─── EXPIRAÇÃO DE EVENTOS ────────────────────────────────────────────────
+// Calcula quando o evento deixa de aparecer no catálogo.
+// Regra: festa que começa à noite continua visível até ~6h da manhã seguinte
+// (senão sumiria à meia-noite com a festa ainda rolando).
+function eventExpiry(e) {
+  // Preferência 1: starts_at (timestamp completo) + 7h de duração estimada
+  if (e.starts_at) {
+    const start = new Date(e.starts_at);
+    if (!isNaN(start.getTime())) return start.getTime() + 7 * 3600 * 1000;
+  }
+  // Preferência 2: campo date (YYYY-MM-DD ou DD/MM/YYYY) → fim do dia + 6h
+  if (e.date) {
+    let iso = null;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(e.date)) {
+      iso = e.date;
+    } else {
+      const br = e.date.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+      if (br) iso = `${br[3]}-${br[2]}-${br[1]}`;
+    }
+    if (iso) {
+      const end = new Date(`${iso}T23:59:59-03:00`);
+      if (!isNaN(end.getTime())) return end.getTime() + 6 * 3600 * 1000;
+    }
+  }
+  // Sem data interpretável: nunca expira (não some por engano)
+  return Infinity;
+}
+const isEventUpcoming = (e) => eventExpiry(e) > Date.now();
 
 function normalizeReport(r, placeColor) {
   if (!r) return null;
@@ -740,6 +770,50 @@ function ProfileScreen({ user, onClose, favPlaces, favEvents, onLogout, onToggle
   const email = user?.email || "Modo convidado";
   const avatar = user?.user_metadata?.avatar_url;
 
+  const handleExportData = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) return alert("Sessão expirada");
+      const res = await fetch("/api/account/export", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      if (!res.ok) return alert("Não foi possível baixar seus dados agora.");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `vybe-meus-dados-${new Date().toISOString().slice(0,10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch { alert("Erro ao exportar dados"); }
+  };
+
+  const handleDeleteAccount = async () => {
+    const confirmed = prompt(
+      "Excluir sua conta é PERMANENTE e apaga todos os seus dados.\n\nPara confirmar, digite exatamente:\nEXCLUIR MINHA CONTA"
+    );
+    if (confirmed !== "EXCLUIR MINHA CONTA") return;
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) return alert("Sessão expirada");
+      const res = await fetch("/api/account/delete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ confirmation: "EXCLUIR MINHA CONTA" }),
+      });
+      const json = await res.json();
+      if (!res.ok) return alert(json.error || "Falha ao excluir conta");
+      alert("Sua conta foi excluída. Até a próxima!");
+      await supabase.auth.signOut();
+      window.location.reload();
+    } catch { alert("Erro ao excluir conta"); }
+  };
+
   return (
     <div style={{ position: "fixed", inset: 0, background: "#080808", zIndex: 700, display: "flex", flexDirection: "column", fontFamily: "'Inter Tight', -apple-system, system-ui, sans-serif", overflowY: "auto" }}>
       <div style={{ background: "linear-gradient(135deg, #A78BFA, #F472B6)", padding: "60px 20px 70px", position: "relative" }}>
@@ -795,6 +869,58 @@ function ProfileScreen({ user, onClose, favPlaces, favEvents, onLogout, onToggle
             </div>
           ))}
         </div>
+        <div style={{ fontSize: 11, color: "#444", fontFamily: "'JetBrains Mono', ui-monospace, monospace", letterSpacing: "0.08em", marginBottom: 4, marginTop: 8 }}>LEGAL E PRIVACIDADE</div>
+        <div style={{ background: "#111", borderRadius: 14, border: "1px solid #222", overflow: "hidden" }}>
+          <a href={TERMS_URL} target="_blank" rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", borderBottom: "1px solid #1a1a1a", textDecoration: "none" }}>
+            <span style={{ fontSize: 18 }}>📜</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#f0f0f0" }}>Termos de Uso</div>
+              <div style={{ fontSize: 11, color: "#555" }}>Regras do serviço</div>
+            </div>
+            <span style={{ fontSize: 12, color: "#666" }}>↗</span>
+          </a>
+          <a href={PRIVACY_POLICY_URL} target="_blank" rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", borderBottom: "1px solid #1a1a1a", textDecoration: "none" }}>
+            <span style={{ fontSize: 18 }}>🔒</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#f0f0f0" }}>Política de Privacidade</div>
+              <div style={{ fontSize: 11, color: "#555" }}>Como usamos seus dados</div>
+            </div>
+            <span style={{ fontSize: 12, color: "#666" }}>↗</span>
+          </a>
+          <a href={COOKIE_POLICY_URL} target="_blank" rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", borderBottom: "1px solid #1a1a1a", textDecoration: "none" }}>
+            <span style={{ fontSize: 18 }}>🍪</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#f0f0f0" }}>Política de Cookies</div>
+              <div style={{ fontSize: 11, color: "#555" }}>Como usamos cookies</div>
+            </div>
+            <span style={{ fontSize: 12, color: "#666" }}>↗</span>
+          </a>
+          <a href={`mailto:${SUPPORT_EMAIL}?subject=Suporte%20Vybe`} style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", borderBottom: "1px solid #1a1a1a", textDecoration: "none" }}>
+            <span style={{ fontSize: 18 }}>🆘</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#f0f0f0" }}>Suporte / Reportar problema</div>
+              <div style={{ fontSize: 11, color: "#555" }}>{SUPPORT_EMAIL}</div>
+            </div>
+            <span style={{ fontSize: 12, color: "#666" }}>↗</span>
+          </a>
+          <button onClick={handleExportData} style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", borderBottom: "1px solid #1a1a1a", background: "transparent", border: "none", cursor: "pointer", textAlign: "left" }}>
+            <span style={{ fontSize: 18 }}>📥</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#f0f0f0" }}>Baixar meus dados</div>
+              <div style={{ fontSize: 11, color: "#555" }}>Exportar em JSON (LGPD)</div>
+            </div>
+            <span style={{ fontSize: 16, color: "#444" }}>›</span>
+          </button>
+          <button onClick={handleDeleteAccount} style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", background: "transparent", border: "none", cursor: "pointer", textAlign: "left" }}>
+            <span style={{ fontSize: 18 }}>🗑️</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#EF4444" }}>Excluir minha conta</div>
+              <div style={{ fontSize: 11, color: "#555" }}>Permanente e irreversível</div>
+            </div>
+            <span style={{ fontSize: 16, color: "#444" }}>›</span>
+          </button>
+        </div>
+
         {userIsAdmin && (
           <button onClick={onOpenAdmin} style={{ marginTop: 8, padding: 16, background: "#0f0a1a", border: "1px solid #A78BFA55", borderRadius: 14, color: "#A78BFA", fontSize: 14, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
             ⚙️ Painel Admin
@@ -1156,14 +1282,25 @@ export default function App() {
         .eq("status", "active")
         .order("created_at", { ascending: false });
       if (!error && data?.length > 0) {
-        setEvents(data.map(normalizeEvent).filter(Boolean));
+        setEvents(data.map(normalizeEvent).filter(Boolean).filter(isEventUpcoming));
       } else if (!error) {
         const { data: fallback } = await supabase.from("events").select("*").order("created_at", { ascending: false });
-        if (fallback?.length > 0) setEvents(fallback.map(normalizeEvent).filter(Boolean));
+        if (fallback?.length > 0) setEvents(fallback.map(normalizeEvent).filter(Boolean).filter(isEventUpcoming));
       }
       setLoadingEvents(false);
     };
     fetchEvents();
+  }, []);
+
+  // Remove festas expiradas em tempo real (checa a cada minuto com o app aberto)
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setEvents(prev => {
+        const alive = prev.filter(isEventUpcoming);
+        return alive.length === prev.length ? prev : alive;
+      });
+    }, 60_000);
+    return () => clearInterval(timer);
   }, []);
 
    // Busca lugares do Supabase

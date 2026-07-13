@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { supabase } from "./supabase";
+import { PRIVACY_POLICY_URL, TERMS_URL } from "./legal";
 
 // ─── CIDADES DISPONÍVEIS ─────────────────────────────────────────────────
 const CITIES = [
@@ -279,6 +280,20 @@ export function SignupScreen({ onClose, onSuccess }) {
         <button onClick={handleNext} disabled={loading} style={{ ...primaryBtn, opacity: loading ? 0.6 : 1 }}>
           {loading ? "Criando conta..." : step === 3 ? "Criar conta ✨" : "Continuar →"}
         </button>
+
+        {step === 3 && (
+          <div style={{ fontSize: 11, color: "#666", textAlign: "center", marginTop: 16, lineHeight: 1.5 }}>
+            Ao criar conta, você aceita nossos{" "}
+            <a href={TERMS_URL} target="_blank" rel="noopener noreferrer" style={{ color: "#A78BFA", textDecoration: "underline" }}>
+              Termos de Uso
+            </a>
+            {" "}e{" "}
+            <a href={PRIVACY_POLICY_URL} target="_blank" rel="noopener noreferrer" style={{ color: "#A78BFA", textDecoration: "underline" }}>
+              Política de Privacidade
+            </a>
+            .
+          </div>
+        )}
       </div>
     </div>
   );
